@@ -1,3 +1,7 @@
+# DEPRECATED
+
+Active development on this demo is now taking place at https://github.com/confluentinc/demo-siem-optimization. Cheers!
+
 # Optimize SIEM With Confluent
 
 The examples in this repository give you hands-on experience optimizing Security Information and Event Management (SIEM) solutions using Confluent. Each tutorial illustrates how to use Confluent to improve the response to a common cybersecurity scenario.
