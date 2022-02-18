@@ -175,8 +175,7 @@ services:
     volumes:
       - ./scripts/init_dummy.sh:/init_dummy.sh
       - ./pcaps:/pcaps
-      - ./local.zeek:/usr/local/zeek/share/zeek/site/local.zeek
-      - ./send-to-kafka.zeek:/usr/local/zeek/share/zeek/site/send-to-kafka.zeek
+      - ./zeek:/usr/local/zeek/share/zeek/site
     cap_add:
       - NET_ADMIN
 
@@ -262,7 +261,7 @@ services:
       - ksqldb-server
     hostname: cyber-sigma-streams
     volumes:
-      - $PWD/scripts/:/tmp/config
+      - ./sigma:/tmp/config
     command:
       - bash
       - -c
