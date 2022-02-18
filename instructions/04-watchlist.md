@@ -20,9 +20,9 @@ id,dateadded,domain,source
 ```
 To ingest this CSV file into a new topic and automatically create a schema for that topic, start a new Spooldir connector to watch for this source.  If you have CLI access, you can run:
 ```
-./scripts/submit_adhosts_spooldir.sh
+./scripts/submit-connector.sh kafka-connect/connectors/spooldir-source-adhosts.json
 ```
-Or you can upload the ```./scripts/adhosts_spooldir.json``` file by clicking "Upload connector config file" from within the Confluent Control Center UI.
+Or you can upload the ```kafka-connect/connectors/spooldir-source-adhosts.json``` file by clicking "Upload connector config file" from within the Confluent Control Center UI.
 
 Once this is started, or if it had already been started, the `ad_hosts.csv` file moves to:
 ```

@@ -4,8 +4,15 @@
 # Takes a json file as input.
 # ex: ./submit-connector.sh /path/to/my-connector.json
 
-echo -e "\nsubmitting connector $1\n"
+# Optionally add a second parameter to specify the connect host.
+# ex: ./submit-connector.sh /path/to/my-connector.json my-connect-hostname
+
 
 HEADER="Content-Type: application/json"
+CONNECT_HOST=$2
+CONNECT_HOST="${CONNECT_HOST:-localhost}"
 
-curl -X POST -H "${HEADER}" --data "@$1" http://localhost:8083/connectors
+echo -e "\nsubmitting connector $1\n"
+echo -e "connecting to host $CONNECT_HOST\n"
+
+curl -X POST -H "${HEADER}" --data "@$1" http://$CONNECT_HOST:8083/connectors

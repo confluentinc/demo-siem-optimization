@@ -17,6 +17,4 @@ services:
       - bash
       - -c
       - |
-        for connector in /connectors/*.json; do
-          submit-connector.sh /connectors/$connector
-        done
+        for connector in /connectors/*.json; do submit-connector.sh $${connector} connect; done
