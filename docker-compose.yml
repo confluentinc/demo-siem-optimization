@@ -220,7 +220,7 @@ services:
       - 8000:8000
       - 8090:8090
     volumes:
-      - ./default.yml:/tmp/defaults/default.yml
+      - ./splunk/default.yml:/tmp/defaults/default.yml
 
   splunk_uf1:
       image: splunk/universalforwarder:latest
@@ -233,7 +233,7 @@ services:
         - SPLUNK_PASSWORD=dingdong
         - SPLUNK_APPS_URL=https://raw.githubusercontent.com/JohnnyMirza/confluent_splunk_demo/main/splunk-add-on-for-cisco-asa_410.tgz
       volumes:
-        - $PWD/splunk-uf1/:/opt/splunkforwarder/etc/apps/splunk-uf1/
+        - ./splunk/splunk-uf1/:/opt/splunkforwarder/etc/apps/splunk-uf1/
       ports:
         - 3333:3333
 
@@ -243,7 +243,7 @@ services:
     restart: unless-stopped
     user: 'root'
     volumes:
-      - $PWD/splunk-eventgen/:/opt/splunk-eventgen
+      - ./splunk/splunk-eventgen/:/opt/splunk-eventgen
     ports:
       - 6379:6379
       - 9500:9500
