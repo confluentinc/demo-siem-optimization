@@ -4,7 +4,7 @@
 # Takes a json file as input.
 # ex: ./submit-connector.sh /path/to/my-connector.json
 
-echo "submitting connectors\n\n"
+echo -e "\nsubmitting connector $1\n"
 
 HEADER="Content-Type: application/json"
 
