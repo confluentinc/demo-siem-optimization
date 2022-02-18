@@ -52,7 +52,7 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
 
   connect:
-    image: confluentinc/cp-server-connect-base:latest
+    build: kafka-connect
     hostname: connect
     container_name: connect
     user: root

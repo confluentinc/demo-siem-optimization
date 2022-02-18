@@ -1,7 +1,3 @@
-#!/bin/bash
-
-HEADER="Content-Type: application/json"
-DATA=$( cat << EOF
 {
 	"name": "syslog",
 	"config": {
@@ -13,7 +9,3 @@ DATA=$( cat << EOF
 		"confluent.topic.replication.factor": "1"
 	}
 }
-EOF
-)
-
-curl -X POST -H "${HEADER}" --data "${DATA}" http://localhost:8083/connectors
