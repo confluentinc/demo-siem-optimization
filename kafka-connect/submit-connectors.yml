@@ -1,0 +1,22 @@
+---
+# Add this as an override to submit connectors.
+# ex: docker-compose -f docker-compose.yml -f kafka-connect/sumbit-connectors.yml up -d
+version: '3'
+services:
+  submit-connectors:
+    image: confluentinc/cp-server-connect-base:latest
+    hostname: submit-connectors
+    container_name: submit-connectors
+    depends_on:
+      connect:
+        condition: service_healthy
+    volumes:
+      - ./scripts/submit-connector.sh:/usr/bin/submit-connector.sh
+      - ./kafka-connect/connectors:/connectors
+    command:
+      - bash
+      - -c
+      - |
+        for connector in /connectors/*.json; do
+          submit-connector.sh /connectors/$connector
+        done

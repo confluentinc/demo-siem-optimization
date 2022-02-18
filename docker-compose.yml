@@ -94,8 +94,6 @@ services:
       CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
     volumes:
       - ./spooldir/:/var/spooldir/
-      - ./scripts/submit-connector.sh:/usr/bin/submit-connector.sh
-      - ./kafka-connect/connectors:/connectors
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:latest
