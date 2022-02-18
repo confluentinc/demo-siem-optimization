@@ -520,7 +520,7 @@ EMIT CHANGES;
 
 5. In the terminal, execute
     ```bash
-    ./scripts/submit_splunk_sink.sh
+    ./scripts/submit-connector.sh kafka-connect/connectors/splunk-sink.json
     ```
 
 6. Go to the Connect cluster in Control Center.
@@ -547,7 +547,7 @@ EMIT CHANGES;
 
 1. In the terminal, submit the connector and then go to Connect -> connectors in Control Center:
     ```bash
-    ./scripts/submit_elastic_sink.sh
+    ./scripts/submit-connector.sh kafka-connect/connectors/elastic-sink.json
     ```
 
 > You can now see we have a connector sending data to Elastic. Lets head over to Elastic to verify that its getting in.
