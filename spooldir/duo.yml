@@ -1,7 +1,7 @@
 ---
 # Add this as an override to produce duo data
-# ex: docker-compose -f docker-compose.yml -f duo.yml up -d
-version: '2'
+# ex: docker-compose -f docker-compose.yml -f spooldir/duo.yml up -d
+version: '3'
 services:
   duo:
     image: confluentinc/cp-server-connect-base:latest
