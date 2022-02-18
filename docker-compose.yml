@@ -132,7 +132,7 @@ services:
     ports:
       - "8088:8088"
     volumes:
-      - ./ksql-extension:/etc/ksql-extension/
+      - ./ksqlDB/ksql-extension:/etc/ksql-extension/
       - ./mmdb:/opt/mmdb/
     environment:
       KSQL_CONFIG_DIR: "/etc/ksql"
@@ -161,7 +161,7 @@ services:
     entrypoint: /bin/sh
     tty: true
     volumes:
-      - ./ksqldb_scripts:/ksqldb_scripts
+      - ./ksqlDB/queries:/queries
 
   # See https://github.com/berthayes/zeek-tcpreplay-kafka
   zeek-streamer:
