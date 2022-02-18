@@ -16,10 +16,17 @@ tasks:
     init: python3 scripts/get_pcap.py
   
   - name: download docker images
-    init: docker-compose pull 
+    init: docker-compose build && docker-compose pull
 
   - name: start services
-    command: docker-compose up -d
+    command: |
+      if [[ -z "$SUBMIT_CONNECTORS" ]]; then
+        docker-compose up -d
+        echo "Started without connectors"
+      else
+        docker-compose -f docker-compose.yml -f kafka-connect/submit-connectors.yml up -d
+        echo "Started with connectors"
+      fi
 
 ports:
 

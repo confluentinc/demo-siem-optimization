@@ -7,8 +7,10 @@ The examples in this repository give you hands-on experience optimizing Security
 This demo runs best using Gitpod. Gitpod uses your existing git service account (GitHub, Gitlab, or BitBucket) for authentication. See the [gitpod tips](./instructions/gitpod-tips.md) to get acquainted with gitpod.
 
 **Launch a workspace** to get hands-on with the labs:
-- (if demo not in confluentinc yet) https://gitpod.io/#https://github.com/chuck-confluent/demo-siem-optimization
 - https://gitpod.io/#https://github.com/confluentinc/demo-siem-optimization
+
+If you want to launch a workspace that **automatically submits all connectors**, use this link instead:
+- https://gitpod.io/#SUBMIT_CONNECTORS=true/https://github.com/confluentinc/demo-siem-optimization
 
 If you want to run locally or in a different environment, see the [appendix](./instructions/appendix.md).
 
