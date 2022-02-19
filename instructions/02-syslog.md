@@ -20,6 +20,13 @@ The Syslog connector is listening on port 5140/UDP.
 
 0. Open Confluent Control Center by launching a new tab for port `9021` (see [Gitpod tips](./gitpod-tips.md) if running in Gitpod).
 
+1. If it's not running already, create the syslog connector:
+   - Navigate to the connect cluster in Confluent Control Center.
+   - Select "add connector"
+   - Select "SyslogSourceConnector"
+   - Set `syslog.listener` to `UDP` and `syslog.port` to `5140`.
+   - Submit the connector.
+
 1.  Go to the ksqlDB editor in Create a stream from the syslog data with the following ksqlDB query:
 
     ```sql
