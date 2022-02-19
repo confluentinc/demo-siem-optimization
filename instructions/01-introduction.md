@@ -21,4 +21,9 @@ This lab environment is a network of Docker containers. There is a Splunk event 
 
 ## What next?
 
-Go to 
+- For a comprehensive, end-to-end demo, go to the [Executive Demonstration](./00-executive-demo.ms)
+- To explore different use cases, see the other small hands-on labs:
+  - [Analyze Syslog Data in Real Time with ksqlDB](./instructions/02-syslog.md)
+  - [Calculate Hourly Bandwidth Usage By Host with ksqlDB](./instructions/03-bandwidth.md)
+  - [Match Hostnames in a Watchlist Against Streaming DNS Data](./instructions/04-watchlist.md)
+  - [Filter SSL Transactions and Enrich with Geospatial Data](./instructions/05-ssl.md)
