@@ -214,7 +214,7 @@ services:
       - ./splunk/splunk-search/:/opt/splunk/etc/apps/splunk-search
 
   splunk_uf1:
-      image: splunk/universalforwarder:latest
+      image: splunk/universalforwarder:8.2.1
       hostname: splunk_uf1
       container_name: splunk_uf1
       depends_on:
