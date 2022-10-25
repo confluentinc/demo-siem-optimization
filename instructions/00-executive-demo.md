@@ -121,12 +121,15 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
         "id.resp_p" INTEGER, 
         proto STRING, 
         service STRING, 
+        duration DOUBLE(18,17),
+        orig_bytes INTEGER,
+        resp_bytes INTEGER,
         conn_state STRING, 
         local_orig BOOLEAN, 
         local_resp BOOLEAN, 
         missed_bytes INTEGER, 
         history STRING, 
-        orig_packets INTEGER, 
+        orig_pkts INTEGER, 
         orig_ip_bytes INTEGER, 
         resp_pkts INTEGER, 
         resp_ip_bytes INTEGER) 
@@ -161,8 +164,6 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
         RD BOOLEAN, 
         RA BOOLEAN, 
         Z INTEGER, 
-        answers array<VARCHAR>, 
-        TTLs array<DOUBLE(5,1)>, 
         rejected BOOLEAN) 
     WITH (KAFKA_TOPIC='dns', VALUE_FORMAT='JSON');
     ```
@@ -186,7 +187,7 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
 
     ```sql
     CREATE STREAM RICH_DNS
-    WITH (PARTITIONS=1, VALUE_FORMAT='JSON')
+    WITH (PARTITIONS=1, VALUE_FORMAT='AVRO')
     AS SELECT d."query", 
             d."id.orig_h" AS SRC_IP, 
             d."id.resp_h" AS DEST_IP,
@@ -194,8 +195,6 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
             d."id.orig_p" AS SRC_PORT, 
             d."id.resp_h" AS DEST_PORT, 
             d.QTYPE_NAME, 
-            d.TTLS, 
-            d.ANSWERS, 
             d.TS, 
             d.UID, 
             c.UID, 
@@ -245,7 +244,7 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
 
     ```sql
     CREATE STREAM MATCHED_DOMAINS_DNS
-    WITH (KAFKA_TOPIC='matched_dns', PARTITIONS=1, REPLICAS=1)
+    WITH (KAFKA_TOPIC='matched_dns', PARTITIONS=1, REPLICAS=1, VALUE_FORMAT='AVRO')
     AS SELECT *
         FROM RICH_DNS INNER JOIN DOMAIN_WATCHLIST
         ON RICH_DNS."query" = DOMAIN_WATCHLIST.DOMAIN
@@ -452,7 +451,7 @@ EMIT CHANGES;
 2. Create query to filter out noisy producer.
     ```sql
     CREATE STREAM CISCO_ASA_FILTER_106023
-    WITH (KAFKA_TOPIC='CISCO_ASA_FILTER_106023', PARTITIONS=1, REPLICAS=1)
+    WITH (KAFKA_TOPIC='CISCO_ASA_FILTER_106023', PARTITIONS=1, REPLICAS=1, VALUE_FORMAT='AVRO')
     AS SELECT
         SPLUNK.`event` `event`,
         SPLUNK.`source` `source`,
@@ -523,13 +522,18 @@ EMIT CHANGES;
     ./scripts/submit-connector.sh kafka-connect/connectors/splunk-sink.json
     ```
 
-6. Go to the Connect cluster in Control Center.
+6. Then execute
+    ```bash
+    ./scripts/submit-connector.sh kafka-connect/connectors/splunk-sink-preaggregated.json
+    ```
 
-> Note that you now have two sink connectors going to Splunk.  Lets head over to splunk now and look at the data.
+7. Go to the Connect cluster in Control Center.
 
-7. Open the Splunk UI by launching a new tab for port `8000` from Remote Explorer (see [Gitpod tips](./gitpod-tips.md)). Navigate to app -> search -> search. Run `index=* search`.
+> Note that you now have a sink connector going to Splunk.  Lets head over to splunk now and look at the data.
 
-> You can see that we have two source types. One is for the filtered ASA data and the other one is for the deduped stream.  In fact what I should have done was actually run the deduping stream processor ON top of the filtered data and I would have gotten slightly better compression.  In any event I can run a query in Splunk that will give me a report and enable me to compare my savings.
+8. Open the Splunk UI by launching a new tab for port `8000` from Remote Explorer (see [Gitpod tips](./gitpod-tips.md)). Log in with the username **admin** and password **dingdong** Navigate to app -> search -> search. Run `index=*` and search.
+
+> You can see that we have two source types. One is for the filtered ASA data and the other one is for the aggregated stream.  I can run a query in Splunk that will give me a report and enable me to compare my savings.
 
 8. Run the query:
     ```
@@ -545,7 +549,7 @@ EMIT CHANGES;
 
 > So remember that voluminous DNS data we talked about in the beginning?  Well we are already analyzing this in real time with Sigma but suppose we wanted to index it all and do retrospective analysis. Maybe we don’t want to send it to Splunk because of its size. Maybe we want to leverage another tool, lets say Elastic, for this.  I can just as easily send a topic to Elastic as I can to Splunk.  So lets create a new sink connector for the enriched DNS we made.  Again, I’ll just execute a script for this.
 
-1. In the terminal, submit the connector and then go to Connect -> connectors in Control Center:
+1. In the terminal, submit the connector and then go to Connect -> connectors in Control Center.
     ```bash
     ./scripts/submit-connector.sh kafka-connect/connectors/elastic-sink.json
     ```
@@ -554,7 +558,7 @@ EMIT CHANGES;
 
 2. Open Kibana, Elastic's web UI, on port `5601` from Remote Explorer (see [Gitpod tips](./gitpod-tips.md))
 
-. From Kibana's hamburger menu on the top left, go to Management -> Stack Management -> Index Patterns and create an index pattern `rich*` match the `rich_dns` index. Then click the the hamburger menu and select "Discover".
+. From Kibana's hamburger menu on the top left, select "Discover" and create a data view with `rich*` to match the `rich_dns` index.
 
 > As you can, see the data is here.  I’ll leave the Elastic analysis up to your imagination.
 
