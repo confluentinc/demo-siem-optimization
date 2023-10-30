@@ -4,7 +4,7 @@ The examples in this repository give you hands-on experience optimizing Security
 solutions using Confluent. Each tutorial illustrates how to use Confluent to improve the response to a common 
 cybersecurity scenario.
 
-## Starting up the environemnt
+## Starting up the environment
 
 This demonstration currently only runs on AMD64 platform Linux and requires docker and docker-compose to be installed.
 Because there are so many components running (Confluent Platform, zeek, Elastic, Confluent Sigma, and Splunk) you will 
