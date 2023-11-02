@@ -189,7 +189,9 @@ services:
 
   # See https://github.com/berthayes/zeek-tcpreplay-kafka
   zeek-streamer:
-    image: wlaforest/zeek-tcpreplay-kafka:2.0
+    image: localbuild/zeek-tcpreplay-kafka
+    build:
+      context: images/zeek-tcpreplay-kafka
     platform: linux/amd64
     container_name: zeek-streamer
     depends_on:
