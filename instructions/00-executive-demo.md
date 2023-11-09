@@ -272,7 +272,7 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
 
 > What you are seeing here is a simple web interface for the Confluent Sigma. I mentioned earlier that the data being sent into Confluent in this demonstration was taken during a data exfiltration exercise.  You may also remember that I said DNS was a favorite channel for exploitation by baddies.  So let's see if we can develop a sigma rule to exposes this.  Data exfiltration likely means that someone has a bot or trojan inside our network and they want to send data out to a collecting server. One innocuous way to do this is make legitimate DNS queries from the trojan but encode the data in the DNS query.
 
-5. Go to the "Sigma Rules" tab and paste the rule. Click the "publish" button when ready. Show the rule in "Sigma Rules".
+5. Go to the "Sigma Rules" tab and click the "+" sign to add a new rule. Paste the rule below and click the "Publish Changes" button when ready. Show the rule in "Sigma Rules".
     ```yml
     title: Possible DNS exfiltration
     status: test
@@ -289,7 +289,7 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
 
 > What you are seeing here is a rule that is looking for any dns queries that are longer than 180 characters as that would be somewhat suspicious.  When I hit the publish button that is going to be sent into a Kafka topic and picked up by the sigma stream processor which will start looking for that pattern in the DNS topic.
 
-6. Go to the DNS tab.
+6. Go to the Detection tab and click on the DNS menu.
 
 > The sigma streams processor is currently configured to put any matching records into a new topic called `dns-detection`. As you can see there is nothing in there.  This means nothing is matching.  Actually I can go back to my sigma UI and click on the DNS Data tab and see that gray represents record flow in the topic and red represents detections.
 
@@ -325,19 +325,35 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
 
 > If you look at the DNS detections topic, you can see there's encoded data being tacked on to a domain called mrhaha.net. That's the rascal! This stream of just the detections can be passed to you SIEM tool via Kafka Connect, your SOAR, or another stream processor to take action.
 
-> Now I’m going to leverage Confluent Sigma's RegEx extraction processor. There are various ways to apply regular expressions in Kafka Connect and ksqlDB, but Confluent Sigma was purpose-built to put data into a form easily consumable by Splunk or other SIEM tools.
+> Now I’m going to leverage Confluent Sigma's RegEx extraction processor. There are various ways to apply regular expressions in Kafka Connect and ksqlDB, but Confluent Sigma was purpose-built to put data into a form easily consumable by Splunk or other SIEM tools. The Sigma rule syntax already supports regex and we have included this in support of Confluent Sigma so we can just create a new regex rule.
 
-11. Click on RegEx in the Confluent Sigma UI and paste in `cisco:asa` as the source type.
+11. Publish a new rule with the regex condition.
+    ```yml
+    title: Cisco Firewalls Extraction
+    description: This rule is the regex rule test
+    author: Mike Peacock
+    logsource:
+    product: splunk
+    service: cisco:asa
+    detection:
+    filter_field:
+        sourcetype: cisco:asa
+    event_match:
+        event|re: '^(?<timestamp>\w{3}\s\d{2}\s\d{2}:\d{2}:\d{2})\s(?<hostname>[^\s]+)\s\%ASA-\d-(?<messageID>[^:]+):\s(?<action>[^\s]+)\s(?<protocol>[^\s]+)\ssrc\sinside:(?<src>[0-9\.]+)\/(?<srcport>[0-9]+)\sdst\soutside:(?<dest>[0-9\.]+)\/(?<destport>[0-9]+)'
+    condition: filter_field AND event_match
+    kafka: 
+    outputTopic: firewalls
+    customFields:
+        location: edge
+        sourcetype: cisco:asa
+        index: main
+    ```
 
 > The source type here allows us to specify that we only want to run the extractions on a single type of record, which is more efficient than running regular expressions on every record. The regular expression field allows us to specify a pattern with capture groups that will get extracted into fields.
 
-12. Paste in the regular expression:
-    ```re
-    ^(?<timestamp>\w{3}\s\d{2}\s\d{2}:\d{2}:\d{2})\s(?<hostname>[^\s]+)\s\%ASA-\d-(?<messageID>[^:]+):\s(?<action>[^\s]+)\s(?<protocol>[^\s]+)\ssrc\sinside:(?<src>[0-9\.]+)\/(?<srcport>[0-9]+)\sdst\soutside:(?<dest>[0-9\.]+)\/(?<destport>[0-9]+)
-    ```
-> Next, we specify the topic where we want matching records to be sent, which in this case is `firewalls`. Then we can attach optional tags to matching records.
+> We can also specify the topic where we want matching records to be sent, which in this case is `firewalls`. Then we can attach optional tags to matching records.
 
-13. Put `firewalls` for the topic and attach tags `location = edge` , `sourcetype = cisco:asa` , `index = main` and submit the rule.
+> We can also attach custom tags that we want to include in the topic such as `location = edge` , `sourcetype = cisco:asa` , `index = main`.
 
 > The really amazing thing about using Sigma as the domain specific language is that new rules are published all the time. With Confluent Sigma, you can insert new rules into a special `sigma-rules` topic and the application will automatically pick them up and apply them to your data in real-time. This allows you to be much more proactive about staying on top of the latest threats.
 
