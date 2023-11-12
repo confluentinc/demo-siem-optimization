@@ -15,7 +15,7 @@
 
 1. Configure Control Center's ksqlDB advertised listener
     - You need to advertise the correct hostname for the ksqlDB server to ensure that the ksqlDB editor in Confluent Control Center can communicate with the ksqlDB server. 
-    - In the `docker-compose.yml` file, change the value of  `CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL` to `http://localhost:8088` if running locally, or to whatever the public DNS hostname is for your VM instance.
+    - In the `docker-compose.yml` file, change the value of  `CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL` to `http://localhost:8088` if running locally, or to whatever the public DNS hostname is for your VM instance.  Alternatively, run `export CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL="http://your-server.com:8088"` before starting the demo.
   
 ### Starting the demo
 

@@ -12,7 +12,8 @@ want a fairly beefy box.  On AWS a m4.xlarge should do the trick.
 
 To run the demonstration clone this repository locally. If you are running this off a remote server you will need to 
 edit the docker-compose.yml to put the correct host name for the value `CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL` 
-in the `control-center` section. 
+in the `control-center` section, or alternatively, `export CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL="http://your-server.com:8088"`
+before running `docker-compose`.
 
 run docker-compose up -d
 
