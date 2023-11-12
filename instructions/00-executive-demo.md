@@ -333,20 +333,21 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
     description: This rule is the regex rule test
     author: Mike Peacock
     logsource:
-    product: splunk
-    service: cisco:asa
+        product: splunk
+        service: cisco:asa
     detection:
-    filter_field:
-        sourcetype: cisco:asa
-    event_match:
-        event|re: '^(?<timestamp>\w{3}\s\d{2}\s\d{2}:\d{2}:\d{2})\s(?<hostname>[^\s]+)\s\%ASA-\d-(?<messageID>[^:]+):\s(?<action>[^\s]+)\s(?<protocol>[^\s]+)\ssrc\sinside:(?<src>[0-9\.]+)\/(?<srcport>[0-9]+)\sdst\soutside:(?<dest>[0-9\.]+)\/(?<destport>[0-9]+)'
-    condition: filter_field AND event_match
+        filter_field:
+            sourcetype: cisco:asa
+        event_match:
+            event|re: '^(?<timestamp>\w{3}\s\d{2}\s\d{2}:\d{2}:\d{2})\s(?<hostname>[^\s]+)\s\%ASA-\d-(?<messageID>[^:]+):\s(?<action>[^\s]+)\s(?<protocol>[^\s]+)\ssrc\sinside:(?<src>[0-9\.]+)\/(?<srcport>[0-9]+)\sdst\soutside:(?<dest>[0-9\.]+)\/(?<destport>[0-9]+)'
+        condition: filter_field AND event_match
     kafka: 
-    outputTopic: firewalls
-    customFields:
-        location: edge
-        sourcetype: cisco:asa
-        index: main
+        outputTopic: firewalls
+        customFields:
+            location: edge
+            sourcetype: cisco:asa
+            index: main
+
     ```
 
 > The source type here allows us to specify that we only want to run the extractions on a single type of record, which is more efficient than running regular expressions on every record. The regular expression field allows us to specify a pattern with capture groups that will get extracted into fields.
