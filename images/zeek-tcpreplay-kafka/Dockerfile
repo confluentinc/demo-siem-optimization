@@ -24,4 +24,5 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN zkg install --force seisollc/zeek-kafka --version v1.2.0 --user-var librdkafka_root=/usr && \
+    rm -rf /usr/local/zeek/var/lib/zkg/scratch /usr/local/zeek/var/lib/zkg/testing && \
     zeek -N Seiso::Kafka
