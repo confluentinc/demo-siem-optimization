@@ -14,7 +14,7 @@ echo "Listen on dummy network with zeek packet sniffer"
 echo "Edit input syslog PCAP to simulate ssh attacks happening now"
 myether=$(ifconfig eth0 | grep ether | awk {'print $2'})
 mysubnet=$(ifconfig eth0 | grep 'inet ' | awk {'print $2'} | awk -F. {'print $1"."$2".0.0"'})
-connectip=$(python -c "import socket;addr1 = socket.gethostbyname('connect');s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.connect((addr1,8083));print(addr1)")
+connectip=$(python3 -c "import socket;addr1 = socket.gethostbyname('connect');s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.connect((addr1,8083));print(addr1)")
 connectmac=$(arp -a | grep connect | awk {'print $4'})
 input="/pcaps/syslog.pcap"
 output="/pcaps/edited_syslog.pcap"

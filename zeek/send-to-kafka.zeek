@@ -1,5 +1,4 @@
-#@load packages/metron-bro-plugin-kafka
-@load Apache/Kafka
+@load Seiso/Kafka
 redef Kafka::topic_name = "";
 redef Kafka::kafka_conf = table(
 	["metadata.broker.list"] = "broker:29092"
