@@ -49,3 +49,7 @@ Run through entire end-to-end demo to get the big picture. Zoom in on the indivi
 
 - https://github.com/confluentinc/confluent-sigma
 
+### Confluent Documentation
+
+- https://docs.confluent.io/home/overview.html
+
