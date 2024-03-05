@@ -17,7 +17,7 @@ git restore spooldir/urlhaus/csv_input/2020-10-16-urlhaus_sample.csv
 once this is done you can run ```docker-compose up -d```
 
 
-2. Display this architecture diagram for your audience:
+2. Display this architecture diagram for your audience if you didn't do so in a presentation
 
     ![architecture diagram](./images/lab-architecture.svg)
 
@@ -29,13 +29,16 @@ once this is done you can run ```docker-compose up -d```
 
 > The lab environment itself is a network of Docker containers. There is a Splunk event generator feeding data to the Universal Forwarder. There is also a container that uses PCAP files to simulate network traffic that is sniffed by Zeek. The Splunk events and syslog events are streamed into topics on the Confluent Server (which is a Kafka broker) via Kafka Connect source connectors. Socket connection, DNS, HTTP, and other network data sniffed by Zeek is produced directly to the broker using an open source Zeek-Kafka plugin. ksqlDB and Confluent Sigma are stream processors that filter, aggregate, and enrich data in motion. The optimized data is sent via Kafka Connect sink connectors to Splunk or Elastic for indexing and analysis.
 
-NOTE: For more detailed information about the ports being used, see the `.gitpod.yml` file. For more detailed information about how each component functions, see the `docker-compose.yml` file.
 
 ## Explore Control Center
 
-Back in Gitpod, open Confluent Control Center by launching a new tab for port `9021` from Remote Explorer (see [Gitpod tips](./gitpod-tips.md)). Browse the topics page.
+Open Confluent Control Center by launching a new tab for port `9021`. Browse the topics page.
 
-> What you are seeing here are a number of topics that already exist in this newly spun up environment. Topics are how different streams of data are organized.  Most of these topics are receiving PCAP data streaming in through a Zeek container. Zeek is a common tool in cyber defense -- it's an open source network sensor that reads packet traffic and produces metadata about that activity on the network.  For instance you can see topics for socket connections, dns queries, http requests, running applications, etc. Zeek is a good example of one of the many tools in this domain that have native support for producing directly into Confluent. Other examples are things like syslog-ng, r-syslog, beats, blue coat proxy, etc.
+> What you are seeing here are a number of topics that already exist in this newly spun up environment. Topics are how different streams of data are organized.  Most of these topics are receiving PCAP data streaming in through the Zeek network sensor which is pretty a common tool in network monitoring and cyber defense. It reads packet traffic and produces metadata about that activity on the network.  For instance you can see topics for socket connections, dns queries, http requests, running applications, etc. Zeek is a good example of one of the many tools in this domain that have native support for producing directly into kafka. Other examples are things like syslog-ng, r-syslog, beats, blue coat proxy, etc.
+
+Show the data in the dns topic
+
+> Just a quick peek you can see the DNS metadat being streaming from Zeek.
 
 > We also have some precreated topics that will be used by our real-time stream processors. One of those for instance is topic with domain name watch lists. But we'll look at that later.
 
@@ -63,17 +66,9 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
 
 > Take a quick peek at the data coming from the splunk universal forwarder. You can see that it's doing something similar to the syslog connector. It has some structure and the original Splunk data from the forwarder.
 
-### View Network Metadata from Zeek
-
-> There is another source of data captured for this demo -- a Zeek network sensor. This network metadata data was captured from an exfiltration exercise and stored in a PCAP file. That file is then streamed into Confluent through a Kafka producer to simulate an obscenely high volume captured in real time. In the real world, the Zeek sensor would send data to a Kafka producer, which would publish to topics in real time. Again, Zeek is producing data about socket connections, dns queries, http requests, running applications, etc. Let's look at the DNS data.
-
-1. Inspect reords in the `dns` topic.
-
->  The volume of DNS data is shockingly high.  In the Pantheon of cyber data volumes, only pure packet capture and netflow data tends to be bigger. Organizations often don’t even send it to their SIEM because it's cost is prohibitive and places a huge burden on the SIEM relative to other data sources.  This data is generally just hard to deal with.  The immediate consequence is bad guys know this and it's a favorite for things like SSH tunneling and data exfiltration.
-
 ## Analyze Streaming SIEM Data in Real Time
 
-> Lets go to ksqlDB in Control Center.  If you are not familiar with ksqlDB, its a stream processing engine that allows you to leverage simple SQL syntax to do some very powerful real-time processing.
+> Ok lets go to ksqlDB in Control Center.  If you are not familiar with ksqlDB, its a stream processing engine that allows you to leverage simple SQL syntax to do some very powerful real-time processing.  As I mentioned earlier this could just as easily be flink... but its what I have containerized here.
 
 1. Go to the ksqlDB app in Control Center. Make sure `auto.offset.reset=earliest` so queries pick up from the beginning of topics.
 
@@ -84,11 +79,11 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
 
 > High-volume, low-value data is costly to index in SIEM tools. SIEMs like Splunk are optimized for indexing and searching, so there are performance and budget costs for sending more data than necessary. Unfortunately that means this data is usually dropped altogether. But what if you could filter and aggregate the data in motion _before_ it gets to the SIEM indexing tool? You would save on costs while still deriving value from that high volume data.
 
-> Organizations are looking to respond more rapidly to threat patterns and automate as much as possible (SOAR -- Security Orchestration Automated Response). Confluent's event-driven, data in motion paradigm is practically purpose built for this sort of demand.
+> Organizations are looking to respond more rapidly to threat patterns and automate as much as possible. Confluent's event-driven, data in motion paradigm is practically purpose built for this sort of demand.
 
 ### Filter and Enrich the DNS Stream
 
-1. Lets joing to zeek streams to provide an enriched stream for downstream consumers
+1. > So the first stream processing I will do is to created an enriched DNS stream for downstream consumers.  I'm going to enrich it by joining it with the connection stream because the DNS data itself lacks network connection metadata that someone might want when looking at these DNS requestions.  That metadata exsits in the connection stream
 
     ```sql
     CREATE STREAM conn_stream (
@@ -138,9 +133,9 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
         rejected BOOLEAN) 
     WITH (KAFKA_TOPIC='dns', VALUE_FORMAT='JSON');
 
-  CREATE STREAM RICH_DNS
-    WITH (PARTITIONS=1, VALUE_FORMAT='AVRO')
-    AS SELECT d."query", 
+    CREATE STREAM RICH_DNS
+      WITH (PARTITIONS=1, VALUE_FORMAT='AVRO')
+      AS SELECT d."query", 
             d."id.orig_h" AS SRC_IP, 
             d."id.resp_h" AS DEST_IP,
             GETGEOFORIP(D.`id.resp_h`) DEST_GEO,
@@ -160,6 +155,7 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
         PARTITION BY "query"
     EMIT CHANGES;
     ```
+    
 Show the enriched stream 
 
 
@@ -168,7 +164,7 @@ Show the enriched stream
     ```sql
     SELECT * FROM RICH_DNS EMIT CHANGES;
     ```
->  Here is the enriched and filtered stream with byte tallies and geospatial data. And now any SIEM tool can take advantage of it. Pretty cool!
+>  Here is the enriched and filtered stream with byte tallies and geospatial data. And now any SIEM tool can take advantage of it and the NOC team can grab it as well.
 
 ### Real-Time Watchlist Alerts
 
