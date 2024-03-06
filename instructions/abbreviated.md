@@ -312,49 +312,9 @@ Show the enriched stream
 
 ## Optimize What Ends Up in Splunk
 
-> So at this point we haven’t really done any substantial optimization on the data. We showed data enrichment and real-time threat detection, but now let's focus on how to optimize the data upstream of our SIEM tools. And I’m going to start off with some more filtering.
+> So at this point we haven’t really done any substantial optimization on the data. We showed data enrichment and real-time threat detection, and those sigma patterns COULD have been used to filter the data to be sent to splunk but lets show an example of how you could compress the data going into Splunk by using temporal binning.
 
-1. Go to the ksqlDB editor and create the Splunk stream and the filtered cisco_asa stream.
-```sql
-
-CREATE STREAM SPLUNK (
-  event VARCHAR,
-  time BIGINT,
-  host VARCHAR,
-  source VARCHAR,
-  sourcetype VARCHAR,
-  index VARCHAR
-) WITH (
-  KAFKA_TOPIC='splunk-s2s-events', VALUE_FORMAT='JSON');
- 
-CREATE STREAM CISCO_ASA AS
-    SELECT * FROM SPLUNK
-    WHERE sourcetype = 'cisco:asa'
-    EMIT CHANGES;
-```
-
-> ksqlDB is able to infer the schemas for the data coming from the Splunk Universal Forwarder. We then filter out all events that are not sourcetype cisco:asa.  In the real world, you would need to be more sophisticated about what you filter, but for this generated data it is effectively just filtering out some internal splunk messages.
-
-> So suppose I know that we have a noisy but benign data producer.  I can go ahead and filter them out as well with this query.
-
-2. Create query to filter out noisy producer.
-    ```sql
-    CREATE STREAM CISCO_ASA_FILTER_106023
-    WITH (KAFKA_TOPIC='CISCO_ASA_FILTER_106023', PARTITIONS=1, REPLICAS=1, VALUE_FORMAT='AVRO')
-    AS SELECT
-        SPLUNK.event,
-        SPLUNK.source,
-        SPLUNK.sourcetype,
-        SPLUNK.index
-    FROM SPLUNK SPLUNK
-    WHERE ((SPLUNK.sourcetype = 'cisco:asa') AND (NOT (SPLUNK.event LIKE '%ASA-4-106023%')))
-    EMIT CHANGES;
-    ```
-> Note that while I’m filtering out in the derived stream, the original stream has all the raw data in it.  If I was required for compliance to hold on to this I could do so in a very cost effective way in Confluent using tiered storage.  In this case data over a certain age will go into S3 compatible storage, but the refined and much smaller data set can be sent to your SIEM.  With Confluent you can always rewind the original data stream (as long as you've defined a retention period) and reprocess it later if you realize that you want to adjust your rules. 
-
-> Filtering is helpful, but you have to be certain and there is only so much you can filter.  So I want to demonstrate how to use windowed aggregations to massively compress recurring events.  In this case I’m going to use 60 second intervals.
-
-3. Create the firewalls stream and create the windowed aggregation.
+1. Create the firewalls stream and create the windowed aggregation.
     ```sql
     CREATE STREAM FIREWALLS (
         `src` VARCHAR,
@@ -370,7 +330,7 @@ CREATE STREAM CISCO_ASA AS
         `location` VARCHAR,
         `timestamp` VARCHAR
     ) WITH (
-    KAFKA_TOPIC='firewalls', value_format='JSON'
+      KAFKA_TOPIC='firewalls', value_format='JSON'
     );
 
     CREATE TABLE AGGREGATOR WITH (KAFKA_TOPIC='AGGREGATOR', KEY_FORMAT='JSON', PARTITIONS=1, REPLICAS=1) AS SELECT
@@ -408,11 +368,6 @@ CREATE STREAM CISCO_ASA AS
 
 5. In the terminal, execute
     ```bash
-    ./scripts/submit-connector.sh kafka-connect/connectors/splunk-sink.json
-    ```
-
-6. Then execute
-    ```bash
     ./scripts/submit-connector.sh kafka-connect/connectors/splunk-sink-preaggregated.json
     ```
 
@@ -433,30 +388,3 @@ CREATE STREAM CISCO_ASA AS
     | sort -savings
     ```
 > Effectively what you are seeing is a side by comparison for the number of straight cisco events in the filtered data vs. the number in my deduplicated data broken down by event type.  You can see there is anywhere between a 98% to 99% savings in the number records.
-
-## Avoid Lock-In -- Analyze with Elastic
-
-> So remember that voluminous DNS data we talked about in the beginning?  Well we are already analyzing this in real time with Sigma but suppose we wanted to index it all and do retrospective analysis. Maybe we don’t want to send it to Splunk because of its size. Maybe we want to leverage another tool, lets say Elastic, for this.  I can just as easily send a topic to Elastic as I can to Splunk.  So lets create a new sink connector for the enriched DNS we made.  Again, I’ll just execute a script for this.
-
-1. In the terminal, submit the connector and then go to Connect -> connectors in Control Center.
-    ```bash
-    ./scripts/submit-connector.sh kafka-connect/connectors/elastic-sink.json
-    ```
-
-> You can now see we have a connector sending data to Elastic. Lets head over to Elastic to verify that its getting in.
-
-2. Open Kibana, Elastic's web UI, on port `5601` from Remote Explorer (see [Gitpod tips](./gitpod-tips.md))
-
-. From Kibana's hamburger menu on the top left, select "Discover" and create a data view with `rich*` to match the `rich_dns` index.
-
-> As you can, see the data is here.  I’ll leave the Elastic analysis up to your imagination.
-
-> I have sent data to Splunk and Elastic but I could have just as easily sent the data to a S3, a data lake, or whatever you want to use. This is an essential aspect of using Confluent to create an observability data fabric. it enables a vast ecosystem of tools rather than forcing you to use a single vendor. 
-
-## Summary
-
->  In summary, this demo showed four advantages of using Confluent: 
->1. Detect threats directly in the streams of data in real-time with ksqlDB and Confluent Sigma.
->2. Decrease your Splunk costs by filtering and aggregating the data before it lands in Splunk.
->3. Gain insights from high volume data too expensive to index.
->4. Avoid vendor lock-in so that you can take advantage of the strengths of different SIEM vendors.
