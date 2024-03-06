@@ -174,7 +174,8 @@ Show the enriched stream
 
 1. Set the ksqlDB editor's `auto.offset.reset` to `earliest` so the watchlist table will be populated from the beginning of the topic.
 
-2. Create the `DOMAIN_WATCHLIST` lookup table 
+2. Create the `DOMAIN_WATCHLIST` table and create the joined stream with the matches
+   
     ```sql
     CREATE TABLE DOMAIN_WATCHLIST (
         domain VARCHAR PRIMARY KEY,
@@ -182,12 +183,7 @@ Show the enriched stream
         dateadded STRING,
         source VARCHAR)
     WITH (KAFKA_TOPIC='adhosts', VALUE_FORMAT='AVRO');
-    ```
->  Now we can create a query that emits events for any DNS lookups against domain names in the watchlist.
 
-3. Create the persistent query.
-
-    ```sql
     CREATE STREAM MATCHED_DOMAINS_DNS
     WITH (KAFKA_TOPIC='matched_dns', PARTITIONS=1, REPLICAS=1, VALUE_FORMAT='AVRO')
     AS SELECT *
@@ -195,6 +191,7 @@ Show the enriched stream
         ON RICH_DNS."query" = DOMAIN_WATCHLIST.DOMAIN
     EMIT CHANGES;
     ```
+    
 > Now every time a DNS request goes to a domain in the watchlist, an event will be emitted to the `matched_dns` topic, where any other service can listen and take action. Not only that, but the watchlist table will update in real time as new records arrive in the `adhosts` topic.
 
 > Let's see if we are getting any watchlist matches.
