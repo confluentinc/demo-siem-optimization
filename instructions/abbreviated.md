@@ -28,7 +28,7 @@ once this is done you can run ```docker-compose up -d```
 
 Open Confluent Control Center by launching a new tab for port `9021`. Browse the topics page.
 
-> What you are seeing here are a number of topics that already exist in this newly spun up environment. Topics are how different streams of data are organized.  Most of these topics are receiving PCAP data streaming in through the Zeek network sensor which is pretty a common tool in network monitoring and cyber defense. It reads packet traffic and produces metadata about that activity on the network.  For instance you can see topics for socket connections, dns queries, http requests, running applications, etc. Zeek is a good example of one of the many tools in this domain that have native support for producing directly into kafka. Other examples are things like syslog-ng, r-syslog, beats, blue coat proxy, etc.
+> What you are seeing here are a number of topics that already exist in this newly spun up environment. Topics are how different streams of data are organized.  Most of these topics are receiving network metadata streaming in through the Zeek network sensor which is pretty a common tool in network monitoring and cyber defense. It reads packet traffic and produces metadata about that activity on the network.  For instance you can see topics for socket connections, dns queries, http requests, running applications, etc. Zeek is a good example of one of the many tools in this domain that have native support for producing directly into kafka. Other examples are things like syslog-ng, r-syslog, beats, blue coat proxy, etc.
 
 Show the data in the dns topic
 
