@@ -21,12 +21,6 @@ once this is done you can run ```docker-compose up -d```
 
     ![architecture diagram](./images/lab-architecture.svg)
 
->  This demo will show four advantages of using Confluent: 
->1. Real-time threat detection directly in the streams of data.
->2. Decrease your Splunk costs by filtering and aggregating the data before it lands in Splunk.
->3. Gain insights from high volume data too expensive to index
->4. Avoid vendor lock-in so that you can take advantage of the strengths of different SIEM vendors.
-
 > The lab environment itself is a network of Docker containers. There is a Splunk event generator feeding data to the Universal Forwarder. There is also a container that uses PCAP files to simulate network traffic that is sniffed by Zeek. The Splunk events and syslog events are streamed into topics on the Confluent Server (which is a Kafka broker) via Kafka Connect source connectors. Socket connection, DNS, HTTP, and other network data sniffed by Zeek is produced directly to the broker using an open source Zeek-Kafka plugin. ksqlDB and Confluent Sigma are stream processors that filter, aggregate, and enrich data in motion. The optimized data is sent via Kafka Connect sink connectors to Splunk or Elastic for indexing and analysis.
 
 
@@ -64,7 +58,7 @@ Show the data in the dns topic
 
 7. Inspect the records in the `splunk-s2s-events` topic.
 
-> Take a quick peek at the data coming from the splunk universal forwarder. You can see that it's doing something similar to the syslog connector. It has some structure and the original Splunk data from the forwarder.
+> We will take a quick peek at the data coming from the splunk universal forwarder. You can see that it's doing something similar to the syslog connector. It has some structure and the original Splunk data from the forwarder.
 
 ## Analyze Streaming SIEM Data in Real Time
 
@@ -77,13 +71,13 @@ Show the data in the dns topic
 >2. Data from Splunk agents flowing into Confluent via the Splunks2sSourceConnector
 >3. High volume network metadata taken from a Zeek sensor.
 
-> High-volume, low-value data is costly to index in SIEM tools. SIEMs like Splunk are optimized for indexing and searching, so there are performance and budget costs for sending more data than necessary. Unfortunately that means this data is usually dropped altogether. But what if you could filter and aggregate the data in motion _before_ it gets to the SIEM indexing tool? You would save on costs while still deriving value from that high volume data.
+> High-volume, low-value data is costly to index in SIEM tools. SIEMs like Splunk are optimized for indexing and searching, so there are performance and budget costs for sending more data than necessary. Unfortunately that means that its not unusual for data to be dropped altogether. But what if you could filter and aggregate the data in motion _before_ it gets to the SIEM indexing tool? You would save on costs while still deriving value from that high volume data.
 
 > Organizations are looking to respond more rapidly to threat patterns and automate as much as possible. Confluent's event-driven, data in motion paradigm is practically purpose built for this sort of demand.
 
 ### Filter and Enrich the DNS Stream
 
-1. > So the first stream processing I will do is to created an enriched DNS stream for downstream consumers.  I'm going to enrich it by joining it with the connection stream because the DNS data itself lacks network connection metadata that someone might want when looking at these DNS requestions.  That metadata exsits in the connection stream
+1. > So the first stream processing I will do is to created an enriched DNS stream for downstream consumers.  I'm going to enrich it by joining it with the TCP connection stream because the DNS data itself lacks network connection metadata that someone might want when looking at these DNS requestions.  That metadata exsits in the connection stream
 
     ```sql
     CREATE STREAM conn_stream (
@@ -155,8 +149,7 @@ Show the data in the dns topic
         PARTITION BY "query"
     EMIT CHANGES;
     ```
-    
-Show the enriched stream 
+
 
 
 2. Submit query to inspect the new derived stream.
@@ -388,3 +381,22 @@ Show the enriched stream
     | sort -savings
     ```
 > Effectively what you are seeing is a side by comparison for the number of straight cisco events in the filtered data vs. the number in my deduplicated data broken down by event type.  You can see there is anywhere between a 98% to 99% savings in the number records.
+
+## Avoid Lock-In -- Analyze with Elastic
+
+> So remember that enriched DNS data we showed at the beginning of the demo? Well we are already analyzing this in real time with Sigma looking for anomolies.. and the results could be consumed by a SOAR... but imagine the network teams wants to use that enriched DNS data... which is a pretty reasonably thing to expect.  Well let say they are using... elastic... they can just spin up a connector to tap into that stream... so I am going to do that now. Again, I’ll just execute a script for this.
+
+1. In the terminal, submit the connector and then go to Connect -> connectors in Control Center.
+    ```bash
+    ./scripts/submit-connector.sh kafka-connect/connectors/elastic-sink.json
+    ```
+
+> You can now see we have a connector sending data to Elastic. Lets head over to Elastic to verify that its getting in.
+
+2. Open Kibana, Elastic's web UI, on port `5601` from Remote Explorer (see [Gitpod tips](./gitpod-tips.md))
+
+. From Kibana's hamburger menu on the top left, select "Discover" and create a data view with `rich*` to match the `rich_dns` index.
+
+> As you can, see the data is here.  I’ll leave the Elastic analysis up to your imagination.
+> At I could just as easily send any of this data to any tool I wanted.. I might want to take all my security data products and send it to S3 for compliance retention...
+> So at this point I'd like to conclude and open up the floor for quesitons!
