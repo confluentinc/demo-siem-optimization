@@ -201,23 +201,12 @@ Show the data in the dns topic
 
 ## Apply Sigma Rules in Real-Time with Confluent Sigma
 
-1. Go to the [Confluent Sigma slide](https://docs.google.com/presentation/d/1fRue23OSV_zddkXWOv4YOARvK1SHAOkffcFzms0RBsk/edit#slide=id.g102ab69693c_0_4511) in the presentation.
 
-> In working with my many cyber defense customers, one thing I realized is that very few of the SOC personnel are coders, and even SQL can be out of their comfort zone. They are focused on understanding their domain and their toolset. That's why we created Confluent Sigma, an open-source stream processing application with a UI for security professionals.
-
-2. Open the Confluent Sigma UI on port `8080` in a new tab from Remote Explorer (see [Gitpod tips](./gitpod-tips.md)).
-
-> We wrote Confluent Sigma using Kafka Streams, which is a poorly named but powerful stream processing library for Java.  ksqlDB actually runs on Kafka Streams "under the hood." As a Java library, Kafka Streams gives deeper programmatic control over your stream processing logic, which in this case we used to create a custom application. To understand what it does, we need to know what Sigma is in the SIEM world.
-
-3. Show the https://github.com/SigmaHQ/sigma page.
-
-> Sigma is a domain-specific language (DSL) to describe suspicious patterns in log events. It's open source, and security researchers maintain collections of Sigma patterns to share with others.
-
-4. Go back to the Confluent Sigma UI tab.
+1. Go back to the Confluent Sigma UI tab.
 
 > What you are seeing here is a simple web interface for the Confluent Sigma. I mentioned earlier that the data being sent into Confluent in this demonstration was taken during a data exfiltration exercise.  You may also remember that I said DNS was a favorite channel for exploitation by baddies.  So let's see if we can develop a sigma rule to exposes this.  Data exfiltration likely means that someone has a bot or trojan inside our network and they want to send data out to a collecting server. One innocuous way to do this is make legitimate DNS queries from the trojan but encode the data in the DNS query.
 
-5. Go to the "Sigma Rules" tab and click the "+" sign to add a new rule. Paste the rule below and click the "Publish Changes" button when ready. Show the rule in "Sigma Rules".
+2. Go to the "Sigma Rules" tab and click the "+" sign to add a new rule. Paste the rule below and click the "Publish Changes" button when ready. Show the rule in "Sigma Rules".
     ```yml
     title: Possible DNS exfiltration
     status: test
@@ -234,21 +223,21 @@ Show the data in the dns topic
 
 > What you are seeing here is a rule that is looking for any dns queries that are longer than 180 characters as that would be somewhat suspicious.  When I hit the publish button that is going to be sent into a Kafka topic and picked up by the sigma stream processor which will start looking for that pattern in the DNS topic.
 
-6. Go to the Detection tab and click on the DNS menu.
+3. Go to the Detection tab and click on the DNS menu.
 
 > The sigma streams processor is currently configured to put any matching records into a new topic called `dns-detection`. As you can see there is nothing in there.  This means nothing is matching.  Actually I can go back to my sigma UI and click on the DNS Data tab and see that gray represents record flow in the topic and red represents detections.
 
 > So if there is a bot sending data out they aren’t dumb enough to use big long suspicious queries.  We will make it preposterously low to demonstrate that its working at all.
 
-7. Edit the rule to change 180 to 8, publish, and go back to the DNS tab.
+4. Edit the rule to change 180 to 8, publish, and go back to the DNS tab.
 
 > You can now see that pretty much every DNS record matches which is what we would expect.  Let's set it back to 180 and let's publish a different new rule.
 
-8. Edit the rule to change 8 back to to 180, publish, and go back to the DNS tab.
+5. Edit the rule to change 8 back to to 180, publish, and go back to the DNS tab.
 
 > If the bot isn’t publishing long queries then it's clearly keeping them more modest so that it will fly under the radar.  In this case we are looking for queries over 50 characters which are not rare but only key in on them IF you see more than 10 of them in a 5 second window.
 
-9. Publish a new rule and then return to the DNS tab.
+6. Publish a new rule and then return to the DNS tab.
     ```yml
     title: Possible DNS exfiltration over Time
     status: test
@@ -266,13 +255,13 @@ Show the data in the dns topic
 
 > Now you can see we have matches.
 
-10. Go to Control Center and look at records in the `dns-detection` topic.
+7. Go to Control Center and look at records in the `dns-detection` topic.
 
 > If you look at the DNS detections topic, you can see there's encoded data being tacked on to a domain called mrhaha.net. That's the rascal! This stream of just the detections can be passed to you SIEM tool via Kafka Connect, your SOAR, or another stream processor to take action.
 
 > Now I’m going to leverage Confluent Sigma's RegEx extraction processor. There are various ways to apply regular expressions in Kafka Connect and ksqlDB, but Confluent Sigma was purpose-built to put data into a form easily consumable by Splunk or other SIEM tools. The Sigma rule syntax already supports regex and we have included this in support of Confluent Sigma so we can just create a new regex rule.
 
-11. Publish a new rule with the regex condition.
+8. Publish a new rule with the regex condition.
     ```yml
     title: Cisco Firewalls Extraction
     description: This rule is the regex rule test
