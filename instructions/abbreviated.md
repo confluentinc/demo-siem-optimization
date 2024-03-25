@@ -14,7 +14,7 @@ git restore spooldir/ad_hosts/csv_input/ad_servers.csv
 git restore spooldir/urlhaus/csv_input/2020-10-16-urlhaus_sample.csv
 ```
 
-once this is done you can run ```docker-compose up -d```
+Once this is done you can run ```docker-compose up -d```
 
 
 2. Display this architecture diagram for your audience if you didn't do so in a presentation
