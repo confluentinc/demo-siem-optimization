@@ -3,7 +3,7 @@
 
 ## Introduction
 
-Keep this guide open on a separate screen so you can refer to it throughout the demo. It is suggested to can go to GitHub to benefit from code copy button functionality.
+Keep this guide open on a separate screen so you can refer to it throughout the demo. View the file on GitHub in order to benefit from code copy button functionality.
 - https://github.com/confluentinc/demo-siem-optimization/instructions/abbreviated.md
   
 1. You will be using docker-compose to start the demo up but if you have run this demo before in the same directory you will
