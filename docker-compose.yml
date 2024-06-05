@@ -253,7 +253,7 @@ services:
       KIBANA_AUTOCOMPLETETERMINATEAFTER: 2500000
 
   splunk:
-    image: splunk/splunk:latest
+    image: splunk/splunk:8.2.1
     depends_on:
       broker:
         condition: service_healthy
