@@ -1,0 +1,359 @@
+---
+services:
+  broker:
+      image: public.ecr.aws/warpstream-labs/warpstream_agent:latest
+      hostname: broker
+      container_name: broker
+      command:
+        - playground
+        - -advertiseHostnameStrategy
+        - custom
+        - -advertiseHostnameCustom
+        - broker
+        - -kafkaPort
+        - "29092"
+        - -httpPort
+        - "9090"
+      environment:
+        # this is a no-op as it will default on the custom advertised hostname defined above, but you can change this if you want to use a different hostname with Kafka
+        - WARPSTREAM_DISCOVERY_KAFKA_HOSTNAME_OVERRIDE=broker
+      ports:
+        - "9092:29092"
+        - "29092:29092"
+
+      healthcheck:
+        # Wait for the Agent to finish setting up the demo before marking it as healthy
+        # to delay the diagnose-connection command from running for a few seconds.
+        test: ["CMD", "sh", "-c", "sleep 10"]
+        interval: 5s
+        timeout: 15s
+        retries: 5
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:latest
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      broker:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
+
+  connect:
+    build: ../kafka-connect 
+    hostname: connect
+    container_name: connect
+    user: root
+    depends_on:
+      broker:
+        condition: service_healthy
+      schema-registry:
+        condition: service_started
+    ports:
+      - "8083:8083"
+      - "9997:9997"
+      - "5140:5140/udp"
+    healthcheck:
+      interval: 15s
+      timeout: 15s
+      retries: 20
+      test: curl -f http://localhost:8083 || exit 1
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: 'broker:29092'
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: _docker-connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: _docker-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: _docker-connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      # CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+      CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
+    volumes:
+      - ../spooldir/:/var/spooldir/
+
+  submit-spooldir-source-adhosts:
+    image: confluentinc/cp-server-connect-base:latest
+    hostname: submit-spooldir-source-adhosts
+    container_name: submit-spooldir-source-adhosts
+    depends_on:
+      connect:
+        condition: service_healthy
+    volumes:
+      - ../scripts/submit-connector.sh:/usr/bin/submit-connector.sh
+      - ../kafka-connect/connectors:/connectors
+    command:
+      - bash
+      - -c
+      - for connector in '/connectors/spooldir-source-adhosts.json' '/connectors/splunk-s2s-source.json' ; do submit-connector.sh $${connector} connect; done
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:latest
+    hostname: control-center
+    container_name: control-center
+    user: root
+    depends_on:
+      - broker
+      - schema-registry
+      - connect
+      - ksqldb-server
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
+      CONTROL_CENTER_CONNECT_CONNECT-DEFAULT_CLUSTER: 'connect:8083'
+      # The control center server connects to ksqlDB through the docker network
+      CONTROL_CENTER_KSQL_KSQLDB1_URL: "http://ksqldb-server:8088"
+
+      # If running locally, your browser must connect to ksqlDB through localhost 8088. If running remotely edit the
+      # advertised URL to have the appropriate hostname.
+      CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL: ${CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL:-https://localhost:8088}
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MODE_ENABLE: "management"
+
+  ksqldb-server:
+    image: confluentinc/cp-ksqldb-server:latest
+    hostname: ksqldb-server
+    container_name: ksqldb-server
+    depends_on:
+      - broker
+      - connect
+    ports:
+      - "8088:8088"
+    volumes:
+      - ../ksqlDB/ksql-extension:/etc/ksql-extension/
+      - ../mmdb:/opt/mmdb/
+    environment:
+      KSQL_CONFIG_DIR: "/etc/ksql"
+      KSQL_KSQL_EXTENSION_DIR: "/etc/ksql-extension"
+      KSQL_KSQL_FUNCTIONS_GETGEOFORIP_GEOCITY_DB_PATH: /opt/mmdb/GeoLite2-City.mmdb
+      KSQL_KSQL_FUNCTIONS_GETASNFORIP_GEOCITY_DB_PATH: /opt/mmdb/GeoLite2-ASN.mmdb
+      KSQL_BOOTSTRAP_SERVERS: "broker:29092"
+      KSQL_HOST_NAME: ksqldb-server
+      KSQL_LISTENERS: "http://0.0.0.0:8088"
+      KSQL_CACHE_MAX_BYTES_BUFFERING: 0
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      KSQL_KSQL_CONNECT_URL: "http://connect:8083"
+      KSQL_KSQL_HIDDEN_TOPICS: '^_.*'
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+
+  ksqldb-cli:
+    image: confluentinc/cp-ksqldb-cli:latest
+    container_name: ksqldb-cli
+    depends_on:
+      - broker
+      - connect
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true
+    volumes:
+      - ../ksqlDB/queries:/queries
+
+  syslog-streamer:
+    image: localbuild/syslog-tcpreplay-kafka
+    build:
+      context: ../syslog/image/syslog-tcpreplay-kafka
+    platform: linux/amd64
+    depends_on:
+      - connect
+      - broker
+    container_name: syslog-streamer
+    hostname: syslog-streamer
+    entrypoint: /start.sh
+    volumes:
+      - ../syslog/start.sh:/start.sh
+      - ../syslog/pcaps:/pcaps
+    cap_add:
+      - NET_ADMIN
+
+  zeek-streamer:
+    image: localbuild/zeek-tcpreplay-kafka
+    build:
+      context: ../zeek/image/zeek-tcpreplay-kafka
+    platform: linux/amd64
+    container_name: zeek-streamer
+    hostname: zeek-streamer
+    entrypoint: /start.sh
+    volumes:
+      - ../zeek/start.sh:/start.sh
+      - ../zeek:/usr/local/zeek/share/zeek/site
+      - ../zeek/kafka:/usr/local/zeek/share/zeek/site/kafka
+      - ../zeek/pcaps:/pcaps
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      broker:
+        condition: service_healthy
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.3.3
+    container_name: elasticsearch
+    depends_on:
+      broker:
+        condition: service_healthy
+      connect:
+        condition: service_healthy
+    healthcheck:
+      start_period: 10s
+      interval: 10s
+      retries: 20
+      test: curl --user "elastic:es_pass" -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+      cluster.name: "elasticsearch-cp-demo"
+      bootstrap.memory_lock: 'true'
+      discovery.type: single-node
+      ELASTIC_PASSWORD: es_pass
+      xpack.security.enabled: 'false'
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.3.3
+    container_name: kibana
+    restart: always
+    healthcheck:
+      interval: 10s
+      retries: 20
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://kibana:5601/api/status || exit 1
+    depends_on:
+      - elasticsearch
+    ports:
+      - 5601:5601
+    environment:
+      NEWSFEED_ENABLED: 'false'
+      TELEMETRY_OPTIN: 'false'
+      TELEMETRY_ENABLED: 'false'
+      SERVER_MAXPAYLOADBYTES: 4194304
+      KIBANA_AUTOCOMPLETETIMEOUT: 3000
+      KIBANA_AUTOCOMPLETETERMINATEAFTER: 2500000
+
+  splunk:
+    image: splunk/splunk:8.2.1
+    depends_on:
+      broker:
+        condition: service_healthy
+      connect:
+        condition: service_healthy    
+    platform: linux/amd64
+    container_name: splunk
+    hostname: splunk
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_HEC_TOKEN=ef16f05f-40e0-4108-a644-5323e02aaa44
+      - SPLUNK_PASSWORD
+      - SPLUNK_APPS_URL=https://raw.githubusercontent.com/JohnnyMirza/confluent_splunk_demo/main/splunk-add-on-for-cisco-asa_410.tgz
+    ports:
+      - 8000:8000
+      - 8090:8090
+    volumes:
+      - ../splunk/default.yml:/tmp/defaults/default.yml
+      - ../splunk/splunk-search/:/opt/splunk/etc/apps/splunk-search
+
+  splunk_uf1:
+      image: splunk/universalforwarder:8.2.1
+      platform: linux/amd64
+      hostname: splunk_uf1
+      container_name: splunk_uf1
+      depends_on:
+        - connect
+      environment:
+        - SPLUNK_START_ARGS=--accept-license --answer-yes --no-prompt
+        - SPLUNK_PASSWORD=dingdong
+        - SPLUNK_APPS_URL=https://raw.githubusercontent.com/JohnnyMirza/confluent_splunk_demo/main/splunk-add-on-for-cisco-asa_410.tgz
+      volumes:
+        - ../splunk/splunk-uf1/:/opt/splunkforwarder/etc/apps/splunk-uf1/
+      ports:
+        - "3333"
+
+  splunk_eventgen:
+    image: guilhemmarchand/splunk-eventgen:latest
+    container_name: splunk_eventgen
+    restart: unless-stopped
+    user: 'root'
+    volumes:
+      - ../splunk/splunk-eventgen/:/opt/splunk-eventgen
+    ports:
+      - 6379:6379
+      - 9500:9500
+    depends_on:
+      - splunk_uf1
+    command: 'splunk_eventgen -v generate /opt/splunk-eventgen/default/eventgen.conf'
+
+  sigma-zeek-dns-streams:
+    image: streamingblocks/confluent-sigma:1.3.0
+    container_name: sigma-zeek-dns-streams
+    platform: linux/amd64
+    depends_on:
+      broker:
+        condition: service_healthy
+    hostname: sigma-zeek-dns-streams
+    environment:
+      application_id: 'zeek-dns-rules-streams-app'
+      bootstrap_servers: 'broker:29092'
+      schema_registry: 'http://schema-registry:8081'
+      data_topic: 'dns'
+      output_topic: 'dns-detection'
+      field_mapping_file: '/tmp/config/splunk-zeek.yml'
+      sigma_rules_topic: 'sigma-rules'
+      sigma_rule_filter_product: 'zeek'
+      sigma_rule_filter_service: 'dns'
+    volumes:
+      - ../sigma:/tmp/config
+
+  sigma-splunk-cisco-asa-streams:
+    image: streamingblocks/confluent-sigma:1.3.0
+    container_name: sigma-splunk-cisco-asa-streams
+    platform: linux/amd64
+    depends_on:
+      broker:
+        condition: service_healthy
+    hostname: sigma-splunk-cisco-asa-streams
+    environment:
+      application_id: 'splunk-cisco-asa-rules-streams-app'
+      bootstrap_servers: 'broker:29092'
+      schema_registry: 'http://schema-registry:8081'
+      data_topic: 'splunk-s2s-events'
+      output_topic: 'splunk-cisco-asa-detection'
+      field_mapping_file: '/tmp/config/splunk-zeek.yml'
+      sigma_rules_topic: 'sigma-rules'
+      sigma_rule_filter_product: 'splunk'
+      sigma_rule_filter_service: 'cisco:asa'
+    volumes:
+      - ../sigma:/tmp/config
+
+  sigma-streams-ui:
+    image: streamingblocks/confluent-sigma-ui:1.3.0
+    container_name: sigma-streams-ui
+    platform: linux/amd64
+    depends_on:
+      broker:
+        condition: service_healthy
+    hostname: sigma-streams-ui
+    ports:
+      - 8080:8080
+    environment:
+      bootstrap_servers: 'broker:29092'
+      schema_registry: 'http://schema-registry:8081'
+      group_id: 'sigma-streams-ui'
+      auto_offset.reset: 'latest'
+      key_deserializer: 'org.apache.kafka.common.serialization.StringDeserializer'
+      value_deserializer: 'org.apache.kafka.common.serialization.StringDeserializer'
+      topic_list: 'dns, dns-detection, splunk-s2s-events, firewalls'
+      sigma_rules_topic: 'sigma-rules'

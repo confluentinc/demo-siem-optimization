@@ -5,7 +5,7 @@ solutions using Confluent. Each tutorial illustrates how to use Confluent to imp
 cybersecurity scenario.
 
 ## Starting up the environment
-You can run the demo with Confluent Cloud or Confluent Platform. When running with Confluent Cloud, there are still some self-managed components that will run which are highlighted below.
+You can run the demo with Confluent Cloud, Confluent Platform, or Wapstream. When running with Confluent Cloud, there are still some self-managed components that will run which are highlighted below.
 
 1. Confluent Cloud
 
@@ -70,6 +70,23 @@ You can run the demo with Confluent Cloud or Confluent Platform. When running wi
     environmental variables so the command will become ```sudo -E docker-compose up -d```
 
     To stop the demo:
+    ```
+    docker compose down -v
+    ```
+
+3.  When running the Warpstream based version of the demo simply got to the warpstream directory and use docker-compose to start up:
+
+    ```
+    cd warpstream
+    docker-compose up -d
+    ```
+
+    Note that this uses Warpstream in playground mode which means that it will only work for 4 hours after starting the images up.
+
+    to stop the demo run 
+
+    To stop the demo:
+
     ```
     docker compose down -v
     ```

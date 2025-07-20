@@ -11,15 +11,10 @@ You are a Confluent employee showcasing this demo for an executive audience (or 
 
 ## Introduction
 
-Keep this guide open on a separate screen so you can refer to it throughout the demo. It is suggested to can go to GitHub to benefit from code copy button functionality.
+Keep this guide open on a separate screen so you can refer to it throughout the demo as you can benefit from the copy code feature.
 - https://github.com/confluentinc/demo-siem-optimization/instructions/00-executive-demo.md
 
-1. In a screen you are displaying to your audience, launch the Gitpod workspace by clicking the link:
-   - https://gitpod.io/#https://github.com/confluentinc/demo-siem-optimization
-
-> Here I'm starting a containerized lab environment that will automatically do a lot on launch.
-
-> I am going to demonstrate how Confluent can help you optimize your existing SIEM investment, while at the same time improving your cyber defense capabilities.
+1. I am going to demonstrate how Confluent can help you optimize your existing SIEM investment, while at the same time improving your cyber defense capabilities.
 
 2. Display this architecture diagramfor your audience:
 
@@ -33,11 +28,11 @@ Keep this guide open on a separate screen so you can refer to it throughout the 
 
 > The lab environment itself is a network of Docker containers. There is a Splunk event generator feeding data to the Universal Forwarder. There is also a container that uses PCAP files to simulate network traffic that is sniffed by Zeek. The Splunk events and syslog events are streamed into topics on the Confluent Server (which is a Kafka broker) via Kafka Connect source connectors. Socket connection, DNS, HTTP, and other network data sniffed by Zeek is produced directly to the broker using an open source Zeek-Kafka plugin. ksqlDB and Confluent Sigma are stream processors that filter, aggregate, and enrich data in motion. The optimized data is sent via Kafka Connect sink connectors to Splunk or Elastic for indexing and analysis.
 
-NOTE: For more detailed information about the ports being used, see the `.gitpod.yml` file. For more detailed information about how each component functions, see the `docker-compose.yml` file.
+NOTE: For more detailed information about the components runing and the ports being used see the `docker-compose.yml` file.
 
 ## Explore Control Center
 
-Back in Gitpod, open Confluent Control Center by launching a new tab for port `9021` from Remote Explorer (see [Gitpod tips](./gitpod-tips.md)). Browse the topics page.
+Open confluent control center at port 9021
 
 > What you are seeing here are a number of topics that already exist in this newly spun up environment. Topics are how different streams of data are organized.  Most of these topics are receiving PCAP data streaming in through a Zeek container. Zeek is a common tool in cyber defense -- it's an open source network sensor that reads packet traffic and produces metadata about that activity on the network.  For instance you can see topics for socket connections, dns queries, http requests, running applications, etc. Zeek is a good example of one of the many tools in this domain that have native support for producing directly into Confluent. Other examples are things like syslog-ng, r-syslog, beats, blue coat proxy, etc.
 
@@ -260,7 +255,7 @@ Back in Gitpod, open Confluent Control Center by launching a new tab for port `9
 
 > In working with my many cyber defense customers, one thing I realized is that very few of the SOC personnel are coders, and even SQL can be out of their comfort zone. They are focused on understanding their domain and their toolset. That's why we created Confluent Sigma, an open-source stream processing application with a UI for security professionals.
 
-2. Open the Confluent Sigma UI on port `8080` in a new tab from Remote Explorer (see [Gitpod tips](./gitpod-tips.md)).
+2. Open the Confluent Sigma UI on port `8080`.
 
 > We wrote Confluent Sigma using Kafka Streams, which is a poorly named but powerful stream processing library for Java.  ksqlDB actually runs on Kafka Streams "under the hood." As a Java library, Kafka Streams gives deeper programmatic control over your stream processing logic, which in this case we used to create a custom application. To understand what it does, we need to know what Sigma is in the SIEM world.
 
@@ -468,7 +463,7 @@ CREATE STREAM CISCO_ASA AS
 
 > Note that you now have a sink connector going to Splunk.  Lets head over to splunk now and look at the data.
 
-8. Open the Splunk UI by launching a new tab for port `8000` from Remote Explorer (see [Gitpod tips](./gitpod-tips.md)). Log in with the username **admin** and password **dingdong** Navigate to app -> search -> search. Run `index=*` and search.
+8. Open the Splunk UI by launching a new tab for port `8000`. Log in with the username **admin** and password **dingdong** Navigate to app -> search -> search. Run `index=*` and search.
 
 > You can see that we have two source types. One is for the filtered ASA data and the other one is for the aggregated stream.  I can run a query in Splunk that will give me a report and enable me to compare my savings.
 
@@ -493,9 +488,7 @@ CREATE STREAM CISCO_ASA AS
 
 > You can now see we have a connector sending data to Elastic. Lets head over to Elastic to verify that its getting in.
 
-2. Open Kibana, Elastic's web UI, on port `5601` from Remote Explorer (see [Gitpod tips](./gitpod-tips.md))
-
-. From Kibana's hamburger menu on the top left, select "Discover" and create a data view with `rich*` to match the `rich_dns` index.
+2. Open Kibana, Elastic's web UI, on port `5601`.  From Kibana's hamburger menu on the top left, select "Discover" and create a data view with `rich*` to match the `rich_dns` index.
 
 > As you can, see the data is here.  I’ll leave the Elastic analysis up to your imagination.
 
