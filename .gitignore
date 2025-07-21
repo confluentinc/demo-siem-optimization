@@ -3,3 +3,4 @@
 /.idea/
 pcaps/edited_syslog.pcap
 pcaps/zeek*
+zeek/pcaps/zeek_streamer.pcap

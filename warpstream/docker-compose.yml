@@ -29,9 +29,17 @@ services:
         timeout: 15s
         retries: 5
 
+  warp-create-demo-topics:
+    image: confluentinc/cp-server-connect-base:latest
+    entrypoint: /create-demo-topics.sh
+    depends_on:
+      broker:
+        condition: service_healthy
+    volumes:
+      - ./bin/create-demo-topics.sh:/create-demo-topics.sh
   schema-registry:
     image: confluentinc/cp-schema-registry:latest
-    hostname: schema-registry
+    hostname: schema-registry 
     container_name: schema-registry
     depends_on:
       broker:
@@ -41,6 +49,7 @@ services:
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
+      SCHEMA_REGISTRY_KAFKASTORE_TIMEOUT_MS: 20000
 
   connect:
     build: ../kafka-connect 
@@ -151,6 +160,7 @@ services:
       KSQL_KSQL_HIDDEN_TOPICS: '^_.*'
       KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
       KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+      KSQL_KSQL_STREAMS_CONSUMER_FETCH_MAX_WAIT_MS: 2000
 
   ksqldb-cli:
     image: confluentinc/cp-ksqldb-cli:latest

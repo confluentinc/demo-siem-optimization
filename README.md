@@ -79,6 +79,7 @@ You can run the demo with Confluent Cloud, Confluent Platform, or Wapstream. Whe
     ```
     cd warpstream
     docker-compose up -d
+    cd ..
     ```
 
     Note that this uses Warpstream in playground mode which means that it will only work for 4 hours after starting the images up.
@@ -88,8 +89,14 @@ You can run the demo with Confluent Cloud, Confluent Platform, or Wapstream. Whe
     To stop the demo:
 
     ```
+    cd warpstream
     docker compose down -v
     ```
+    Note that the demo script depends upon [bin/submit-connector.sh] to add splunk sink connectors and elastic sink connectors.  
+    So in these these instructions we switch to the wapstream directory so that laucnhing the demo with docker-compose will have 
+    the correct context and then we go back to the root diretory for the `submit-connector.sh`.  Also with warpstream you can 
+    use the warpstream management console by running the script `warpstream/bin/warpstream-console-url.sh` which will provide
+    you with the URL to the console for the ephemeral Warpstream control plane instance.
 
 ## Hands-On Lab Instructions
 

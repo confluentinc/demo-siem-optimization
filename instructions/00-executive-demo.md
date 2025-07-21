@@ -172,7 +172,7 @@ Open confluent control center at port 9021
 
     ```sql
     CREATE STREAM RICH_DNS
-    WITH (PARTITIONS=1, VALUE_FORMAT='AVRO')
+    WITH (PARTITIONS=1, KAFKA_TOPIC='rich_dns', VALUE_FORMAT='AVRO')
     AS SELECT d."query", 
             d."id.orig_h" AS SRC_IP, 
             d."id.resp_h" AS DEST_IP,
