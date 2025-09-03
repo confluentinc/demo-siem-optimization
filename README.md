@@ -5,7 +5,7 @@ solutions using Confluent. Each tutorial illustrates how to use Confluent to imp
 cybersecurity scenario.
 
 ## Starting up the environment
-You can run the demo with Confluent Cloud, Confluent Platform, or Wapstream. When running with Confluent Cloud, there are still some self-managed components that will run which are highlighted below.
+You can run the demo with Confluent Cloud, Confluent Platform, or WarpStream. When running with Confluent Cloud, there are still some self-managed components that will run which are highlighted below.
 
 1. Confluent Cloud
 
