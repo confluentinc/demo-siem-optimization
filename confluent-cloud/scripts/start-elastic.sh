@@ -19,4 +19,4 @@ echo -n 'Waiting for Elastic...'
 echo '...Elastic is ready!'
 
 echo "Starting the Elastic sink connector..."
-../kafka-connect/submit-connector.sh ../confluent-cloud/connectors/elastic-sink.json
+./scripts/submit-connector.sh ../confluent-cloud/connectors/elastic-sink.json

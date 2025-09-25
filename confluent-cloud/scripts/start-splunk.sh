@@ -9,7 +9,7 @@ echo '...Connect is ready!'
 
 ### Start Splunk components
 echo "Starting the Splunk source connector..."
-../kafka-connect/submit-connector.sh ../kafka-connect/connectors/splunk-s2s-source.json
+./scripts/submit-connector.sh ../kafka-connect/connectors/splunk-s2s-source.json
 
 echo "Starting the Splunk universal forwarder..."
 docker compose up splunk_uf1 -d
@@ -26,5 +26,5 @@ echo -n 'Waiting for Splunk...'
 echo '...Splunk is ready!'
 
 echo "Starting the Splunk sink connector..."
-../kafka-connect/submit-connector.sh ../kafka-connect/connectors/splunk-sink.json
-../kafka-connect/submit-connector.sh ../kafka-connect/connectors/splunk-sink-preaggregated.json
+./scripts/submit-connector.sh ../kafka-connect/connectors/splunk-sink.json
+./scripts/submit-connector.sh ../kafka-connect/connectors/splunk-sink-preaggregated.json

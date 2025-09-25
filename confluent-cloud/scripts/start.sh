@@ -20,7 +20,7 @@ docker compose up control-center -d
 ### Start syslog components
 echo "Starting the Syslog connector..."
 ./scripts/update-syslog-properties.sh
-../kafka-connect/submit-connector.sh ../confluent-cloud/connectors/syslog-source.json
+./scripts/submit-connector.sh ../confluent-cloud/connectors/syslog-source.json
 
 #echo 'Starting the syslog-streamer...'
 docker compose up syslog-streamer -d
