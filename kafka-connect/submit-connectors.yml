@@ -10,6 +10,10 @@ services:
     depends_on:
       connect:
         condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      splunk:
+        condition: service_healthy
     volumes:
       - ./scripts/submit-connector.sh:/usr/bin/submit-connector.sh
       - ./kafka-connect/connectors:/connectors
