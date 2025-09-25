@@ -1,7 +1,7 @@
 ---
 # Add this as an override to submit connectors.
-# ex: docker-compose -f docker-compose.yml -f kafka-connect/sumbit-connectors.yml up -d
-version: '3'
+# example: docker compose -f docker-compose.yml -f kafka-connect/submit-connectors.yml up -d
+
 services:
   submit-connectors:
     image: confluentinc/cp-server-connect-base:latest
