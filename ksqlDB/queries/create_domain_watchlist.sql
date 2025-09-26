@@ -1,0 +1,6 @@
+CREATE TABLE DOMAIN_WATCHLIST (
+    domain VARCHAR PRIMARY KEY,
+    id STRING,
+    dateadded STRING,
+    source VARCHAR)
+WITH (KAFKA_TOPIC='adhosts', VALUE_FORMAT='AVRO');

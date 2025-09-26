@@ -1,0 +1,4 @@
+CREATE STREAM CISCO_ASA AS
+    SELECT * FROM SPLUNK
+    WHERE sourcetype = 'cisco:asa'
+    EMIT CHANGES;

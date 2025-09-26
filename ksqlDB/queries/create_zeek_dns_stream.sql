@@ -19,7 +19,5 @@ CREATE STREAM dns_stream (
     RD BOOLEAN,
     RA BOOLEAN,
     Z INTEGER,
-    answers array<VARCHAR>,
-    TTLs array<DOUBLE(5,1)>,
     rejected BOOLEAN)
 WITH (KAFKA_TOPIC='dns', VALUE_FORMAT='JSON');
