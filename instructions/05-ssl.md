@@ -4,80 +4,80 @@ The `ssl` topic from Zeek has information about the TCP connection in SSL/TLS ex
 
 1. Create a stream from the ```ssl``` topic
     ```sql
-    CREATE STREAM ssl_stream ( 
-        ts DOUBLE(16,6), 
-        uid STRING, 
-        "id.orig_h" VARCHAR, 
-        "id.orig_p" INTEGER, 
-        "id.resp_h" VARCHAR, 
-        "id.resp_p" INTEGER, 
-        version STRING, 
-        cipher VARCHAR, 
-        curve STRING, 
-        server_name VARCHAR, 
-        resumed BOOLEAN, 
-        next_protocol VARCHAR, 
-        established BOOLEAN, 
-        cert_chain_fuids ARRAY<STRING>, 
-        client_cert_chain_fuids ARRAY<STRING>, 
-        subject VARCHAR, 
-        issuer VARCHAR, 
-        validation_status STRING) 
+    CREATE STREAM ssl_stream (
+        ts DOUBLE(16,6),
+        uid STRING,
+        "id.orig_h" VARCHAR,
+        "id.orig_p" INTEGER,
+        "id.resp_h" VARCHAR,
+        "id.resp_p" INTEGER,
+        version STRING,
+        cipher VARCHAR,
+        curve STRING,
+        server_name VARCHAR,
+        resumed BOOLEAN,
+        next_protocol VARCHAR,
+        established BOOLEAN,
+        cert_chain_fuids ARRAY<STRING>,
+        client_cert_chain_fuids ARRAY<STRING>,
+        subject VARCHAR,
+        issuer VARCHAR,
+        validation_status STRING)
     WITH (KAFKA_TOPIC='ssl', VALUE_FORMAT='JSON');
     ```
 
 2. Do the same for the ```x509``` topic
     ```sql
-    CREATE STREAM x509_stream ( 
-        ts DOUBLE(16,6), 
-        id STRING, 
-        "certificate.version" INTEGER, 
-        "certificate.serial" STRING, 
-        "certificate.subject" VARCHAR, 
-        "certificate.issuer" VARCHAR, 
-        "certificate.not_valid_before" BIGINT, 
-        "certificate.not_valid_after" BIGINT, 
-        "certificate.key_alg" STRING, 
-        "certificate.sig_alg" STRING, 
-        "certificate.key_type" STRING, 
-        "certificate.key_length" INTEGER, 
-        "certificate.exponent" INTEGER, 
-        "basic_constraints.ca" BOOLEAN, 
-        "basic_constraints.path_len" INTEGER) 
+    CREATE STREAM x509_stream (
+        ts DOUBLE(16,6),
+        id STRING,
+        "certificate.version" INTEGER,
+        "certificate.serial" STRING,
+        "certificate.subject" VARCHAR,
+        "certificate.issuer" VARCHAR,
+        "certificate.not_valid_before" BIGINT,
+        "certificate.not_valid_after" BIGINT,
+        "certificate.key_alg" STRING,
+        "certificate.sig_alg" STRING,
+        "certificate.key_type" STRING,
+        "certificate.key_length" INTEGER,
+        "certificate.exponent" INTEGER,
+        "basic_constraints.ca" BOOLEAN,
+        "basic_constraints.path_len" INTEGER)
     WITH (KAFKA_TOPIC='x509', VALUE_FORMAT='JSON');
     ```
 
 3. The goal for this next query is to join
 
     ```sql
-    SELECT 
-        s.TS AS SSL_TS, 
+    SELECT
+        s.TS AS SSL_TS,
         FORMAT_TIMESTAMP(FROM_UNIXTIME(CAST(s.TS AS BIGINT)*1000), 'yyyy-MM-dd HH:mm:ss') AS EVENT_TIME,
-        s."id.orig_h" AS SRC_IP, 
-        s."id.orig_p" AS SRC_PORT, 
-        s."id.resp_h" AS DEST_IP, 
+        s."id.orig_h" AS SRC_IP,
+        s."id.orig_p" AS SRC_PORT,
+        s."id.resp_h" AS DEST_IP,
         getgeoforip("id.resp_h") AS GEOIP,
         getasnforip("id.resp_h") AS ASNIP,
-        s."id.resp_p" AS DEST_PORT, 
-        s.VERSION AS VERSION, 
-        s.CIPHER AS CIPHER, 
-        s.CURVE AS CURVE, 
-        s.SERVER_NAME AS SERVER_NAME, 
-        s.SUBJECT AS SUBJECT, 
-        s.ISSUER AS ISSUER, 
-        s.VALIDATION_STATUS AS VALIDATION_STATUS, 
-        x.TS AS X509_TS, 
-        x."certificate.version" AS CERTIFICATE_VERSION, 
-        x."certificate.not_valid_before" AS CERTIFICATE_NOT_VALID_BEFORE, 
-        x."certificate.not_valid_after" AS CERTIFICATE_NOT_VALID_AFTER, 
-        FORMAT_TIMESTAMP(FROM_UNIXTIME(x."certificate.not_valid_after"*1000), 'yyyy-MM-dd HH:mm:ss') AS CERT_EXPIRATION_DATE, 
-        FORMAT_TIMESTAMP(FROM_UNIXTIME(x."certificate.not_valid_before"*1000), 'yyyy-MM-dd HH:mm:ss') AS CERT_REGISTRATION_DATE, 
-        x."certificate.key_alg" AS CERTIFICATE_KEY_ALG, 
-        x."certificate.sig_alg" AS CERTIFICATE_SIG_ALG, 
-        x."certificate.key_type" AS CERTIFICATE_KEY_TYPE, 
-        x."certificate.key_length" AS CERTIFICATE_KEY_LENGTH 
-    FROM SSL_STREAM s INNER JOIN X509_STREAM x WITHIN 1 SECONDS 
-    on s.SUBJECT = x."certificate.subject" 
+        s."id.resp_p" AS DEST_PORT,
+        s.VERSION AS VERSION,
+        s.CIPHER AS CIPHER,
+        s.CURVE AS CURVE,
+        s.SERVER_NAME AS SERVER_NAME,
+        s.SUBJECT AS SUBJECT,
+        s.ISSUER AS ISSUER,
+        s.VALIDATION_STATUS AS VALIDATION_STATUS,
+        x.TS AS X509_TS,
+        x."certificate.version" AS CERTIFICATE_VERSION,
+        x."certificate.not_valid_before" AS CERTIFICATE_NOT_VALID_BEFORE,
+        x."certificate.not_valid_after" AS CERTIFICATE_NOT_VALID_AFTER,
+        FORMAT_TIMESTAMP(FROM_UNIXTIME(x."certificate.not_valid_after"*1000), 'yyyy-MM-dd HH:mm:ss') AS CERT_EXPIRATION_DATE,
+        FORMAT_TIMESTAMP(FROM_UNIXTIME(x."certificate.not_valid_before"*1000), 'yyyy-MM-dd HH:mm:ss') AS CERT_REGISTRATION_DATE,
+        x."certificate.key_alg" AS CERTIFICATE_KEY_ALG,
+        x."certificate.sig_alg" AS CERTIFICATE_SIG_ALG,
+        x."certificate.key_type" AS CERTIFICATE_KEY_TYPE,
+        x."certificate.key_length" AS CERTIFICATE_KEY_LENGTH
+    FROM SSL_STREAM s INNER JOIN X509_STREAM x WITHIN 1 SECONDS
+    on s.SUBJECT = x."certificate.subject"
     WHERE s.VALIDATION_STATUS!='ok' EMIT CHANGES;
     ```
 
@@ -130,38 +130,38 @@ The `ssl` topic from Zeek has information about the TCP connection in SSL/TLS ex
     "CERTIFICATE_KEY_LENGTH": 2048
     }
     ```
-4. Create a persistent query to save these these groomed events to a Kafka topic. 
+4. Create a persistent query to save these these groomed events to a Kafka topic.
     ```sql
     CREATE STREAM BAD_SSL
     WITH (KAFKA_TOPIC='BAD_SSL', VALUE_FORMAT='JSON')
-    AS SELECT 
-        s.TS AS SSL_TS, 
+    AS SELECT
+        s.TS AS SSL_TS,
         FORMAT_TIMESTAMP(FROM_UNIXTIME(CAST(s.TS AS BIGINT)*1000), 'yyyy-MM-dd HH:mm:ss') AS EVENT_TIME,
-        s."id.orig_h" AS SRC_IP, 
-        s."id.orig_p" AS SRC_PORT, 
-        s."id.resp_h" AS DEST_IP, 
+        s."id.orig_h" AS SRC_IP,
+        s."id.orig_p" AS SRC_PORT,
+        s."id.resp_h" AS DEST_IP,
         getgeoforip("id.resp_h") AS GEOIP,
         getasnforip("id.resp_h") AS ASNIP,
-        s."id.resp_p" AS DEST_PORT, 
-        s.VERSION AS VERSION, 
-        s.CIPHER AS CIPHER, 
-        s.CURVE AS CURVE, 
-        s.SERVER_NAME AS SERVER_NAME, 
-        s.SUBJECT AS SUBJECT, 
-        s.ISSUER AS ISSUER, 
-        s.VALIDATION_STATUS AS VALIDATION_STATUS, 
-        x.TS AS X509_TS, 
-        x."certificate.version" AS CERTIFICATE_VERSION, 
-        x."certificate.not_valid_before" AS CERTIFICATE_NOT_VALID_BEFORE, 
-        x."certificate.not_valid_after" AS CERTIFICATE_NOT_VALID_AFTER, 
-        FORMAT_TIMESTAMP(FROM_UNIXTIME(x."certificate.not_valid_after"*1000), 'yyyy-MM-dd HH:mm:ss') AS CERT_EXPIRATION_DATE, 
-        FORMAT_TIMESTAMP(FROM_UNIXTIME(x."certificate.not_valid_before"*1000), 'yyyy-MM-dd HH:mm:ss') AS CERT_REGISTRATION_DATE, 
-        x."certificate.key_alg" AS CERTIFICATE_KEY_ALG, 
-        x."certificate.sig_alg" AS CERTIFICATE_SIG_ALG, 
-        x."certificate.key_type" AS CERTIFICATE_KEY_TYPE, 
-        x."certificate.key_length" AS CERTIFICATE_KEY_LENGTH 
-    FROM SSL_STREAM s INNER JOIN X509_STREAM x WITHIN 1 SECONDS 
-    on s.SUBJECT = x."certificate.subject" 
+        s."id.resp_p" AS DEST_PORT,
+        s.VERSION AS VERSION,
+        s.CIPHER AS CIPHER,
+        s.CURVE AS CURVE,
+        s.SERVER_NAME AS SERVER_NAME,
+        s.SUBJECT AS SUBJECT,
+        s.ISSUER AS ISSUER,
+        s.VALIDATION_STATUS AS VALIDATION_STATUS,
+        x.TS AS X509_TS,
+        x."certificate.version" AS CERTIFICATE_VERSION,
+        x."certificate.not_valid_before" AS CERTIFICATE_NOT_VALID_BEFORE,
+        x."certificate.not_valid_after" AS CERTIFICATE_NOT_VALID_AFTER,
+        FORMAT_TIMESTAMP(FROM_UNIXTIME(x."certificate.not_valid_after"*1000), 'yyyy-MM-dd HH:mm:ss') AS CERT_EXPIRATION_DATE,
+        FORMAT_TIMESTAMP(FROM_UNIXTIME(x."certificate.not_valid_before"*1000), 'yyyy-MM-dd HH:mm:ss') AS CERT_REGISTRATION_DATE,
+        x."certificate.key_alg" AS CERTIFICATE_KEY_ALG,
+        x."certificate.sig_alg" AS CERTIFICATE_SIG_ALG,
+        x."certificate.key_type" AS CERTIFICATE_KEY_TYPE,
+        x."certificate.key_length" AS CERTIFICATE_KEY_LENGTH
+    FROM SSL_STREAM s INNER JOIN X509_STREAM x WITHIN 1 SECONDS
+    on s.SUBJECT = x."certificate.subject"
     WHERE s.VALIDATION_STATUS!='ok'
     PARTITION BY s."id.orig_h"
     EMIT CHANGES;
@@ -171,7 +171,7 @@ The `ssl` topic from Zeek has information about the TCP connection in SSL/TLS ex
 ## Reflection
 
 - What are a couple of things you learned by working hands-on with this Confluent lab?
-- What are some questions you still have? 
+- What are some questions you still have?
   - Consider discussing in Slack or posting to the forum
     - https://www.confluent.io/community/ask-the-community/
 

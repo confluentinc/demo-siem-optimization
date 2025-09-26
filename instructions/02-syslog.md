@@ -43,7 +43,7 @@ The Syslog connector is listening on port 5140/UDP.
         MESSAGE,
         HOST,
         REMOTEADDRESS AS DEST_IP,
-        FORMAT_TIMESTAMP(TIMESTAMP, 'yyyy-MM-dd HH:mm:ss') AS EVENT_TIME, 
+        FORMAT_TIMESTAMP(TIMESTAMP, 'yyyy-MM-dd HH:mm:ss') AS EVENT_TIME,
         REGEXP_EXTRACT('Invalid user (.*) from', MESSAGE, 1) AS USER,
         REGEXP_EXTRACT('Invalid user .* from (.*) port', MESSAGE, 1) AS SRC_IP,
         GETGEOFORIP(REGEXP_EXTRACT('Invalid user .* from (.*) port', MESSAGE, 1)) AS GEOIP,
@@ -90,7 +90,7 @@ The Syslog connector is listening on port 5140/UDP.
         MESSAGE,
         HOST,
         REMOTEADDRESS AS DEST_IP,
-        FORMAT_TIMESTAMP(TIMESTAMP, 'yyyy-MM-dd HH:mm:ss') AS EVENT_TIME, 
+        FORMAT_TIMESTAMP(TIMESTAMP, 'yyyy-MM-dd HH:mm:ss') AS EVENT_TIME,
         REGEXP_EXTRACT('Invalid user (.*) from', MESSAGE, 1) AS USER,
         REGEXP_EXTRACT('Invalid user .* from (.*) port', MESSAGE, 1) AS SRC_IP,
         GETGEOFORIP(REGEXP_EXTRACT('Invalid user .* from (.*) port', MESSAGE, 1)) AS GEOIP,
@@ -104,7 +104,7 @@ The Syslog connector is listening on port 5140/UDP.
 ## Reflection
 
 - What are a couple of things you learned by working hands-on with this Confluent lab?
-- What are some questions you still have? 
+- What are some questions you still have?
   - Consider discussing in Slack or posting to the forum
     - https://www.confluent.io/community/ask-the-community/
 

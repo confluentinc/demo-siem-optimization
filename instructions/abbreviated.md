@@ -5,7 +5,7 @@
 
 Keep this guide open on a separate screen so you can refer to it throughout the demo. View the file on GitHub in order to benefit from code copy button functionality.
 - https://github.com/confluentinc/demo-siem-optimization/instructions/abbreviated.md
-  
+
 1. You will be using docker-compose to start the demo up but if you have run this demo before in the same directory you will
 need to restore files that were moved by the spooldir connector
 
@@ -81,67 +81,67 @@ Show the data in the dns topic
 
     ```sql
     CREATE STREAM conn_stream (
-        ts DOUBLE(16,6), 
-        uid STRING, 
-        "id.orig_h" VARCHAR, 
-        "id.orig_p" INTEGER, 
-        "id.resp_h" VARCHAR, 
-        "id.resp_p" INTEGER, 
-        proto STRING, 
-        service STRING, 
+        ts DOUBLE(16,6),
+        uid STRING,
+        "id.orig_h" VARCHAR,
+        "id.orig_p" INTEGER,
+        "id.resp_h" VARCHAR,
+        "id.resp_p" INTEGER,
+        proto STRING,
+        service STRING,
         duration DOUBLE(18,17),
         orig_bytes INTEGER,
         resp_bytes INTEGER,
-        conn_state STRING, 
-        local_orig BOOLEAN, 
-        local_resp BOOLEAN, 
-        missed_bytes INTEGER, 
-        history STRING, 
-        orig_pkts INTEGER, 
-        orig_ip_bytes INTEGER, 
-        resp_pkts INTEGER, 
-        resp_ip_bytes INTEGER) 
+        conn_state STRING,
+        local_orig BOOLEAN,
+        local_resp BOOLEAN,
+        missed_bytes INTEGER,
+        history STRING,
+        orig_pkts INTEGER,
+        orig_ip_bytes INTEGER,
+        resp_pkts INTEGER,
+        resp_ip_bytes INTEGER)
     WITH (KAFKA_TOPIC='conn', VALUE_FORMAT='JSON');
 
-    CREATE STREAM dns_stream ( 
-        ts DOUBLE(16,6), 
-        uid STRING, 
-        "id.orig_h" VARCHAR, 
-        "id.orig_p" INTEGER, 
-        "id.resp_h" VARCHAR, 
-        "id.resp_p" INTEGER, 
-        proto STRING, 
-        trans_id INTEGER, 
-        "query" VARCHAR, 
-        qclass INTEGER, 
-        qclass_name VARCHAR, 
-        qtype INTEGER, 
-        qtype_name STRING, 
-        rcode INTEGER, 
-        rcode_name STRING, 
-        AA BOOLEAN, 
-        TC BOOLEAN, 
-        RD BOOLEAN, 
-        RA BOOLEAN, 
-        Z INTEGER, 
-        rejected BOOLEAN) 
+    CREATE STREAM dns_stream (
+        ts DOUBLE(16,6),
+        uid STRING,
+        "id.orig_h" VARCHAR,
+        "id.orig_p" INTEGER,
+        "id.resp_h" VARCHAR,
+        "id.resp_p" INTEGER,
+        proto STRING,
+        trans_id INTEGER,
+        "query" VARCHAR,
+        qclass INTEGER,
+        qclass_name VARCHAR,
+        qtype INTEGER,
+        qtype_name STRING,
+        rcode INTEGER,
+        rcode_name STRING,
+        AA BOOLEAN,
+        TC BOOLEAN,
+        RD BOOLEAN,
+        RA BOOLEAN,
+        Z INTEGER,
+        rejected BOOLEAN)
     WITH (KAFKA_TOPIC='dns', VALUE_FORMAT='JSON');
 
     CREATE STREAM RICH_DNS
       WITH (PARTITIONS=1, VALUE_FORMAT='AVRO')
-      AS SELECT d."query", 
-            d."id.orig_h" AS SRC_IP, 
+      AS SELECT d."query",
+            d."id.orig_h" AS SRC_IP,
             d."id.resp_h" AS DEST_IP,
             GETGEOFORIP(D.`id.resp_h`) DEST_GEO,
-            d."id.orig_p" AS SRC_PORT, 
-            d."id.resp_h" AS DEST_PORT, 
-            d.QTYPE_NAME, 
-            d.TS, 
-            d.UID, 
-            c.UID, 
-            c.ORIG_IP_BYTES AS REQUEST_BYTES, 
-            c.RESP_IP_BYTES AS REPLY_BYTES, 
-            c.LOCAL_ORIG 
+            d."id.orig_p" AS SRC_PORT,
+            d."id.resp_h" AS DEST_PORT,
+            d.QTYPE_NAME,
+            d.TS,
+            d.UID,
+            c.UID,
+            c.ORIG_IP_BYTES AS REQUEST_BYTES,
+            c.RESP_IP_BYTES AS REPLY_BYTES,
+            c.LOCAL_ORIG
         FROM DNS_STREAM d INNER JOIN CONN_STREAM c
             WITHIN 1 MINUTES
             ON d.UID = c.UID
@@ -168,7 +168,7 @@ Show the data in the dns topic
 1. Set the ksqlDB editor's `auto.offset.reset` to `earliest` so the watchlist table will be populated from the beginning of the topic.
 
 2. Create the `DOMAIN_WATCHLIST` table and create the joined stream with the matches
-   
+
     ```sql
     CREATE TABLE DOMAIN_WATCHLIST (
         domain VARCHAR PRIMARY KEY,
@@ -184,7 +184,7 @@ Show the data in the dns topic
         ON RICH_DNS."query" = DOMAIN_WATCHLIST.DOMAIN
     EMIT CHANGES;
     ```
-    
+
 > Now every time a DNS request goes to a domain in the watchlist, an event will be emitted to the `matched_dns` topic, where any other service can listen and take action. Not only that, but the watchlist table will update in real time as new records arrive in the `adhosts` topic.
 
 > Let's see if we are getting any watchlist matches.
@@ -275,7 +275,7 @@ Show the data in the dns topic
         event_match:
             event|re: '^(?<timestamp>\w{3}\s\d{2}\s\d{2}:\d{2}:\d{2})\s(?<hostname>[^\s]+)\s\%ASA-\d-(?<messageID>[^:]+):\s(?<action>[^\s]+)\s(?<protocol>[^\s]+)\ssrc\sinside:(?<src>[0-9\.]+)\/(?<srcport>[0-9]+)\sdst\soutside:(?<dest>[0-9\.]+)\/(?<destport>[0-9]+)'
         condition: filter_field AND event_match
-    kafka: 
+    kafka:
         outputTopic: firewalls
         customFields:
             location: edge
@@ -334,11 +334,11 @@ Show the data in the dns topic
         60 DURATION,
         COUNT(*) COUNTS
     FROM FIREWALLS FIREWALLS
-    WINDOW TUMBLING ( SIZE 60 SECONDS ) 
+    WINDOW TUMBLING ( SIZE 60 SECONDS )
     GROUP BY `sourcetype`, `action`, `hostname`, `messageID`, `src`, `dest`, `destport`
     EMIT CHANGES;
     ```
-> Essentially what we're saying is if a message is completely the same but just a new occurrence at a different time I don’t want to emit a new event but instead tally it into a count. The first seven fields are the fields we're using to determine a unique message and you can see the count aggregation. 
+> Essentially what we're saying is if a message is completely the same but just a new occurrence at a different time I don’t want to emit a new event but instead tally it into a count. The first seven fields are the fields we're using to determine a unique message and you can see the count aggregation.
 
 > Rather than continuously sending each individual message into Splunk -- and **paying** for it, including license and indexing cost -- I want to send each unique event 1 time per 60 seconds, with a count to properly represent weight each record .
 
@@ -366,7 +366,7 @@ Show the data in the dns topic
     index=* sourcetype=httpevent
     | bin span=5m _time
     | stats sum(COUNTS) as raw_events count(_raw) as filtered_events by _time, SOURCETYPE, HOSTNAME, MESSAGEID, , ACTION, SRC, DEST, DEST_PORT, DURATION
-    | eval savings=round(((raw_events-filtered_events)/raw_events) * 100,2) . "%" 
+    | eval savings=round(((raw_events-filtered_events)/raw_events) * 100,2) . "%"
     | sort -savings
     ```
 > Effectively what you are seeing is a side by comparison for the number of straight cisco events in the filtered data vs. the number in my deduplicated data broken down by event type.  You can see there is anywhere between a 98% to 99% savings in the number records.

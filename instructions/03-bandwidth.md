@@ -79,7 +79,7 @@ A SIEM tool is a very expensive calculator. With stream processing, you can perf
 ## Reflection
 
 - What are a couple of things you learned by working hands-on with this Confluent lab?
-- What are some questions you still have? 
+- What are some questions you still have?
   - Consider discussing in Slack or posting to the forum
     - https://www.confluent.io/community/ask-the-community/
 

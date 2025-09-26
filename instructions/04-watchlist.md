@@ -28,7 +28,7 @@ Once this is started, or if it had already been started, the `ad_hosts.csv` file
 ```
 ./spooldir/ad_hosts/csv_finished/ad_servers.csv
 ```
-This means that if you are re-running the demonstration with a clean cluster you will need to ensure that you have moved it back to 
+This means that if you are re-running the demonstration with a clean cluster you will need to ensure that you have moved it back to
 ```
 ./spooldir/ad_hosts/csv_input/ad_servers.csv
 ```
@@ -64,7 +64,7 @@ AS SELECT * FROM KEYED_DNS
 INNER JOIN ADVERTS ADVERTS ON KEYED_DNS."query" = ADVERTS.DOMAIN
 EMIT CHANGES;
 ```
-This query creates a new stream `MATCHED_DOMAINS_DNS` that is backed by a new topic, `matched_dns` 
+This query creates a new stream `MATCHED_DOMAINS_DNS` that is backed by a new topic, `matched_dns`
 
 You can look for all DNS lookups that match any host listed in the ad_hosts.csv file with the following query:
 ```sql
@@ -74,7 +74,7 @@ SELECT * FROM  MATCHED_DOMAINS_DNS EMIT CHANGES;
 ## Reflection
 
 - What are a couple of things you learned by working hands-on with this Confluent lab?
-- What are some questions you still have? 
+- What are some questions you still have?
   - Consider discussing in Slack or posting to the forum
     - https://www.confluent.io/community/ask-the-community/
 

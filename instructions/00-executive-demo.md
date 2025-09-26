@@ -20,7 +20,7 @@ Keep this guide open on a separate screen so you can refer to it throughout the 
 
     ![architecture diagram](./images/lab-architecture.svg)
 
->  This demo will show four advantages of using Confluent: 
+>  This demo will show four advantages of using Confluent:
 >1. Real-time threat detection directly in the streams of data.
 >2. Decrease your Splunk costs by filtering and aggregating the data before it lands in Splunk.
 >3. Gain insights from high volume data too expensive to index
@@ -92,7 +92,7 @@ Open confluent control center at port 9021
 
 ### Filter and Enrich the DNS Stream
 
-> Let's use Confluent to optimize your data and look for threats upstream of your SIEM. We're going to use Confluent's stream processing capability ksqlDB to filter, enrich, and aggregate these data streams in real-time. 
+> Let's use Confluent to optimize your data and look for threats upstream of your SIEM. We're going to use Confluent's stream processing capability ksqlDB to filter, enrich, and aggregate these data streams in real-time.
 
 2. Create the `conn_stream` in the KSQL editor.
 
@@ -128,28 +128,28 @@ Open confluent control center at port 9021
 3. Create the `dns_stream` in the KSQL editor.
 
     ```sql
-    CREATE STREAM dns_stream ( 
-        ts DOUBLE(16,6), 
-        uid STRING, 
-        "id.orig_h" VARCHAR, 
-        "id.orig_p" INTEGER, 
-        "id.resp_h" VARCHAR, 
-        "id.resp_p" INTEGER, 
-        proto STRING, 
-        trans_id INTEGER, 
-        "query" VARCHAR, 
-        qclass INTEGER, 
-        qclass_name VARCHAR, 
-        qtype INTEGER, 
-        qtype_name STRING, 
-        rcode INTEGER, 
-        rcode_name STRING, 
-        AA BOOLEAN, 
-        TC BOOLEAN, 
-        RD BOOLEAN, 
-        RA BOOLEAN, 
-        Z INTEGER, 
-        rejected BOOLEAN) 
+    CREATE STREAM dns_stream (
+        ts DOUBLE(16,6),
+        uid STRING,
+        "id.orig_h" VARCHAR,
+        "id.orig_p" INTEGER,
+        "id.resp_h" VARCHAR,
+        "id.resp_p" INTEGER,
+        proto STRING,
+        trans_id INTEGER,
+        "query" VARCHAR,
+        qclass INTEGER,
+        qclass_name VARCHAR,
+        qtype INTEGER,
+        qtype_name STRING,
+        rcode INTEGER,
+        rcode_name STRING,
+        AA BOOLEAN,
+        TC BOOLEAN,
+        RD BOOLEAN,
+        RA BOOLEAN,
+        Z INTEGER,
+        rejected BOOLEAN)
     WITH (KAFKA_TOPIC='dns', VALUE_FORMAT='JSON');
     ```
 
@@ -173,19 +173,19 @@ Open confluent control center at port 9021
     ```sql
     CREATE STREAM RICH_DNS
     WITH (PARTITIONS=1, KAFKA_TOPIC='rich_dns', VALUE_FORMAT='AVRO')
-    AS SELECT d."query", 
-            d."id.orig_h" AS SRC_IP, 
+    AS SELECT d."query",
+            d."id.orig_h" AS SRC_IP,
             d."id.resp_h" AS DEST_IP,
             GETGEOFORIP(D.`id.resp_h`) DEST_GEO,
-            d."id.orig_p" AS SRC_PORT, 
-            d."id.resp_h" AS DEST_PORT, 
-            d.QTYPE_NAME, 
-            d.TS, 
-            d.UID, 
-            c.UID, 
-            c.ORIG_IP_BYTES AS REQUEST_BYTES, 
-            c.RESP_IP_BYTES AS REPLY_BYTES, 
-            c.LOCAL_ORIG 
+            d."id.orig_p" AS SRC_PORT,
+            d."id.resp_h" AS DEST_PORT,
+            d.QTYPE_NAME,
+            d.TS,
+            d.UID,
+            c.UID,
+            c.ORIG_IP_BYTES AS REQUEST_BYTES,
+            c.RESP_IP_BYTES AS REPLY_BYTES,
+            c.LOCAL_ORIG
         FROM DNS_STREAM d INNER JOIN CONN_STREAM c
             WITHIN 1 MINUTES
             ON d.UID = c.UID
@@ -336,7 +336,7 @@ Open confluent control center at port 9021
         event_match:
             event|re: '^(?<timestamp>\w{3}\s\d{2}\s\d{2}:\d{2}:\d{2})\s(?<hostname>[^\s]+)\s\%ASA-\d-(?<messageID>[^:]+):\s(?<action>[^\s]+)\s(?<protocol>[^\s]+)\ssrc\sinside:(?<src>[0-9\.]+)\/(?<srcport>[0-9]+)\sdst\soutside:(?<dest>[0-9\.]+)\/(?<destport>[0-9]+)'
         condition: filter_field AND event_match
-    kafka: 
+    kafka:
         outputTopic: firewalls
         customFields:
             location: edge
@@ -369,7 +369,7 @@ CREATE STREAM SPLUNK (
   index VARCHAR
 ) WITH (
   KAFKA_TOPIC='splunk-s2s-events', VALUE_FORMAT='JSON');
- 
+
 CREATE STREAM CISCO_ASA AS
     SELECT * FROM SPLUNK
     WHERE sourcetype = 'cisco:asa'
@@ -393,7 +393,7 @@ CREATE STREAM CISCO_ASA AS
     WHERE ((SPLUNK.sourcetype = 'cisco:asa') AND (NOT (SPLUNK.event LIKE '%ASA-4-106023%')))
     EMIT CHANGES;
     ```
-> Note that while I’m filtering out in the derived stream, the original stream has all the raw data in it.  If I was required for compliance to hold on to this I could do so in a very cost effective way in Confluent using tiered storage.  In this case data over a certain age will go into S3 compatible storage, but the refined and much smaller data set can be sent to your SIEM.  With Confluent you can always rewind the original data stream (as long as you've defined a retention period) and reprocess it later if you realize that you want to adjust your rules. 
+> Note that while I’m filtering out in the derived stream, the original stream has all the raw data in it.  If I was required for compliance to hold on to this I could do so in a very cost effective way in Confluent using tiered storage.  In this case data over a certain age will go into S3 compatible storage, but the refined and much smaller data set can be sent to your SIEM.  With Confluent you can always rewind the original data stream (as long as you've defined a retention period) and reprocess it later if you realize that you want to adjust your rules.
 
 > Filtering is helpful, but you have to be certain and there is only so much you can filter.  So I want to demonstrate how to use windowed aggregations to massively compress recurring events.  In this case I’m going to use 60 second intervals.
 
@@ -435,11 +435,11 @@ CREATE STREAM CISCO_ASA AS
         60 DURATION,
         COUNT(*) COUNTS
     FROM FIREWALLS FIREWALLS
-    WINDOW TUMBLING ( SIZE 60 SECONDS ) 
+    WINDOW TUMBLING ( SIZE 60 SECONDS )
     GROUP BY `sourcetype`, `action`, `hostname`, `messageID`, `src`, `dest`, `destport`
     EMIT CHANGES;
     ```
-> Essentially what we're saying is if a message is completely the same but just a new occurrence at a different time I don’t want to emit a new event but instead tally it into a count. The first seven fields are the fields we're using to determine a unique message and you can see the count aggregation. 
+> Essentially what we're saying is if a message is completely the same but just a new occurrence at a different time I don’t want to emit a new event but instead tally it into a count. The first seven fields are the fields we're using to determine a unique message and you can see the count aggregation.
 
 > Rather than continuously sending each individual message into Splunk -- and **paying** for it, including license and indexing cost -- I want to send each unique event 1 time per 60 seconds, with a count to properly represent weight each record .
 
@@ -472,7 +472,7 @@ CREATE STREAM CISCO_ASA AS
     index=* sourcetype=httpevent
     | bin span=5m _time
     | stats sum(COUNTS) as raw_events count(_raw) as filtered_events by _time, SOURCETYPE, HOSTNAME, MESSAGEID, , ACTION, SRC, DEST, DEST_PORT, DURATION
-    | eval savings=round(((raw_events-filtered_events)/raw_events) * 100,2) . "%" 
+    | eval savings=round(((raw_events-filtered_events)/raw_events) * 100,2) . "%"
     | sort -savings
     ```
 > Effectively what you are seeing is a side by comparison for the number of straight cisco events in the filtered data vs. the number in my deduplicated data broken down by event type.  You can see there is anywhere between a 98% to 99% savings in the number records.
@@ -492,11 +492,11 @@ CREATE STREAM CISCO_ASA AS
 
 > As you can, see the data is here.  I’ll leave the Elastic analysis up to your imagination.
 
-> I have sent data to Splunk and Elastic but I could have just as easily sent the data to a S3, a data lake, or whatever you want to use. This is an essential aspect of using Confluent to create an observability data fabric. it enables a vast ecosystem of tools rather than forcing you to use a single vendor. 
+> I have sent data to Splunk and Elastic but I could have just as easily sent the data to a S3, a data lake, or whatever you want to use. This is an essential aspect of using Confluent to create an observability data fabric. it enables a vast ecosystem of tools rather than forcing you to use a single vendor.
 
 ## Summary
 
->  In summary, this demo showed four advantages of using Confluent: 
+>  In summary, this demo showed four advantages of using Confluent:
 >1. Detect threats directly in the streams of data in real-time with ksqlDB and Confluent Sigma.
 >2. Decrease your Splunk costs by filtering and aggregating the data before it lands in Splunk.
 >3. Gain insights from high volume data too expensive to index.
