@@ -7,7 +7,7 @@ CREATE STREAM SPLUNK (
   index VARCHAR
 ) WITH (
   KAFKA_TOPIC='splunk-s2s-events', VALUE_FORMAT='JSON');
- 
+
 CREATE STREAM CISCO_ASA AS
     SELECT * FROM SPLUNK
     WHERE sourcetype = 'cisco:asa'
@@ -66,7 +66,7 @@ CREATE TABLE AGGREGATOR WITH (KAFKA_TOPIC='AGGREGATOR', KEY_FORMAT='JSON', PARTI
     60 DURATION,
     COUNT(*) COUNTS
 FROM FIREWALLS FIREWALLS
-WINDOW TUMBLING ( SIZE 60 SECONDS ) 
+WINDOW TUMBLING ( SIZE 60 SECONDS )
 GROUP BY `sourcetype`, `action`, `hostname`, `messageID`, `src`, `dest`, `destport`
 EMIT CHANGES;
 
@@ -77,7 +77,7 @@ EMIT CHANGES;
 index=* sourcetype=httpevent
 | bin span=5m _time
 | stats sum(COUNTS) as raw_events count(_raw) as filtered_events by _time, SOURCETYPE, HOSTNAME, MESSAGEID, , ACTION, SRC, DEST, DEST_PORT, DURATION
-| eval savings=round(((raw_events-filtered_events)/raw_events) * 100,2) . "%" 
+| eval savings=round(((raw_events-filtered_events)/raw_events) * 100,2) . "%"
 | sort -savings
 
 
