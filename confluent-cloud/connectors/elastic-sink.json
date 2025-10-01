@@ -10,7 +10,7 @@
 "value.converter.schema_registry_basic_auth_user_info": "<updated-by-script>",
     "key.converter.schemas.enable": "false",
     "tasks.max": "1",
-    "topics": "RICH_DNS",
+    "topics": "rich_dns",
     "connection.url": "http://elasticsearch:9200",
     "key.ignore": "true",
     "schema.ignore": "true",

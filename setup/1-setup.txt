@@ -9,69 +9,69 @@ localhost:9090 Prometheus
 docker-compose -f docker-compose.yml -f docker-compose.override.yml -f kafka-connect/submit-connectors.yml up -d
 
 CREATE STREAM conn_stream (
-    ts DOUBLE(16,6), 
-    uid STRING, 
-    "id.orig_h" VARCHAR, 
-    "id.orig_p" INTEGER, 
-    "id.resp_h" VARCHAR, 
-    "id.resp_p" INTEGER, 
-    proto STRING, 
-    service STRING, 
+    ts DOUBLE(16,6),
+    uid STRING,
+    "id.orig_h" VARCHAR,
+    "id.orig_p" INTEGER,
+    "id.resp_h" VARCHAR,
+    "id.resp_p" INTEGER,
+    proto STRING,
+    service STRING,
     duration DOUBLE(18,17),
     orig_bytes INTEGER,
     resp_bytes INTEGER,
-    conn_state STRING, 
-    local_orig BOOLEAN, 
-    local_resp BOOLEAN, 
-    missed_bytes INTEGER, 
-    history STRING, 
-    orig_pkts INTEGER, 
-    orig_ip_bytes INTEGER, 
-    resp_pkts INTEGER, 
-    resp_ip_bytes INTEGER) 
+    conn_state STRING,
+    local_orig BOOLEAN,
+    local_resp BOOLEAN,
+    missed_bytes INTEGER,
+    history STRING,
+    orig_pkts INTEGER,
+    orig_ip_bytes INTEGER,
+    resp_pkts INTEGER,
+    resp_ip_bytes INTEGER)
 WITH (KAFKA_TOPIC='conn', VALUE_FORMAT='JSON');
 
 
-CREATE STREAM dns_stream ( 
-    ts DOUBLE(16,6), 
-    uid STRING, 
-    "id.orig_h" VARCHAR, 
-    "id.orig_p" INTEGER, 
-    "id.resp_h" VARCHAR, 
-    "id.resp_p" INTEGER, 
-    proto STRING, 
-    trans_id INTEGER, 
-    "query" VARCHAR, 
-    qclass INTEGER, 
-    qclass_name VARCHAR, 
-    qtype INTEGER, 
-    qtype_name STRING, 
-    rcode INTEGER, 
-    rcode_name STRING, 
-    AA BOOLEAN, 
-    TC BOOLEAN, 
-    RD BOOLEAN, 
-    RA BOOLEAN, 
-    Z INTEGER, 
-    rejected BOOLEAN) 
+CREATE STREAM dns_stream (
+    ts DOUBLE(16,6),
+    uid STRING,
+    "id.orig_h" VARCHAR,
+    "id.orig_p" INTEGER,
+    "id.resp_h" VARCHAR,
+    "id.resp_p" INTEGER,
+    proto STRING,
+    trans_id INTEGER,
+    "query" VARCHAR,
+    qclass INTEGER,
+    qclass_name VARCHAR,
+    qtype INTEGER,
+    qtype_name STRING,
+    rcode INTEGER,
+    rcode_name STRING,
+    AA BOOLEAN,
+    TC BOOLEAN,
+    RD BOOLEAN,
+    RA BOOLEAN,
+    Z INTEGER,
+    rejected BOOLEAN)
 WITH (KAFKA_TOPIC='dns', VALUE_FORMAT='JSON');
 
 
 
 CREATE STREAM RICH_DNS
-WITH (KAFKA_TOPIC='RICH_DNS', VALUE_FORMAT='AVRO')
-AS SELECT d."query", 
-        d."id.orig_h" AS SRC_IP, 
+WITH (KAFKA_TOPIC='rich_dns', VALUE_FORMAT='AVRO')
+AS SELECT d."query",
+        d."id.orig_h" AS SRC_IP,
         d."id.resp_h" AS DEST_IP,
-        d."id.orig_p" AS SRC_PORT, 
-        d."id.resp_h" AS DEST_PORT, 
-        d.QTYPE_NAME, 
-        d.TS, 
-        d.UID, 
-        c.UID, 
-        c.ORIG_IP_BYTES AS REQUEST_BYTES, 
-        c.RESP_IP_BYTES AS REPLY_BYTES, 
-        c.LOCAL_ORIG 
+        d."id.orig_p" AS SRC_PORT,
+        d."id.resp_h" AS DEST_PORT,
+        d.QTYPE_NAME,
+        d.TS,
+        d.UID,
+        c.UID,
+        c.ORIG_IP_BYTES AS REQUEST_BYTES,
+        c.RESP_IP_BYTES AS REPLY_BYTES,
+        c.LOCAL_ORIG
     FROM DNS_STREAM d INNER JOIN CONN_STREAM c
         WITHIN 1 MINUTES
         ON d.UID = c.UID
