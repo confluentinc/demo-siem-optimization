@@ -32,4 +32,9 @@ docker-compose \
     up -d
 ```
 
+If you would additionally like to pre-run all ksqlDB queries and just demo results, run
+```bash
+scripts/run-ksql-queries.sh
+```
+
 If you are using sudo with docker-compose then you will likely need to use the -E option to sudo so it inherits your environmental variables so the last command will become ```sudo -E docker-compose up -d```

@@ -8,6 +8,10 @@ localhost:9090 Prometheus
 
 docker-compose -f docker-compose.yml -f docker-compose.override.yml -f kafka-connect/submit-connectors.yml up -d
 
+scripts/run-ksql-queries.sh
+
+OR:
+
 CREATE STREAM conn_stream (
     ts DOUBLE(16,6),
     uid STRING,
