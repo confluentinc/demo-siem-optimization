@@ -26,5 +26,5 @@ echo -n 'Waiting for Splunk...'
 echo '...Splunk is ready!'
 
 echo "Starting the Splunk sink connector..."
-./scripts/submit-connector.sh ../kafka-connect/connectors/splunk-sink.json
-./scripts/submit-connector.sh ../kafka-connect/connectors/splunk-sink-preaggregated.json
+../scripts/submit-connector.sh ../kafka-connect/connectors/splunk-sink.json
+../scripts/submit-connector.sh ../kafka-connect/connectors/splunk-sink-preaggregated.json

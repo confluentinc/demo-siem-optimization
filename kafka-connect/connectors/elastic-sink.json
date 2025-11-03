@@ -3,9 +3,6 @@
   "config": {
     "name": "ElasticsearchSinkConnectorConnector_0",
     "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
-    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-    "value.converter": "io.confluent.connect.avro.AvroConverter",
-    "value.converter.schema.registry.url": "http://schema-registry:8081",
     "key.converter.schemas.enable": "false",
     "tasks.max": "1",
     "topics": "rich_dns",
