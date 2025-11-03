@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source util.sh
+source ./scripts/rest-util.sh
 
 curl --request GET \
    --url https://${CCLOUD_URL}/kafka/v3/clusters/${CLUSTER_ID}/topics \

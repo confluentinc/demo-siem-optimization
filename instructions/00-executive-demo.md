@@ -370,10 +370,10 @@ CREATE STREAM SPLUNK (
 ) WITH (
   KAFKA_TOPIC='splunk-s2s-events', VALUE_FORMAT='JSON');
 
-CREATE STREAM CISCO_ASA AS
-    SELECT * FROM SPLUNK
-    WHERE sourcetype = 'cisco:asa'
-    EMIT CHANGES;
+CREATE STREAM CISCO_ASA WITH (KAFKA_TOPIC='CISCO_ASA', PARTITIONS=1, VALUE_FORMAT='JSON')
+AS SELECT * FROM SPLUNK
+WHERE sourcetype = 'cisco:asa'
+EMIT CHANGES;
 ```
 
 > ksqlDB is able to infer the schemas for the data coming from the Splunk Universal Forwarder. We then filter out all events that are not sourcetype cisco:asa.  In the real world, you would need to be more sophisticated about what you filter, but for this generated data it is effectively just filtering out some internal splunk messages.

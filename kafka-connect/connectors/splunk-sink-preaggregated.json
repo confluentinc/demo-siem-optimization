@@ -1,7 +1,6 @@
 {
     "name": "SPLUNKSINK_PREAGGREGATED",
     "config": {
-      "confluent.topic.bootstrap.servers": "broker:29092",
       "name": "SPLUNKSINK_PREAGGREGATED",
       "connector.class": "com.splunk.kafka.connect.SplunkSinkConnector",
       "tasks.max": "1",

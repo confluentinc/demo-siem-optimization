@@ -1,4 +1,4 @@
-FROM confluentinc/cp-server-connect-base:latest
+FROM cnfldemos/cp-server-connect-datagen:0.6.4-7.6.0
 
 # Install connectors
 RUN confluent-hub install --no-prompt confluentinc/kafka-connect-elasticsearch:latest && \
